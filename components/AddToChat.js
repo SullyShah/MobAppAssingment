@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { TextInput, Button, Alert, View, Text, FlatList, StyleSheet } from 'react-native';
+import { TextInput, Button, View, Text, FlatList, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class AddToChatScreen extends Component {
@@ -12,16 +12,13 @@ class AddToChatScreen extends Component {
       chat_id: this.props.route.params.chat_id,
       user_id: '',
       chatDetails: this.props.route.params.chatDetails,
+      modalVisible: false,
+      modalMessage: '',
     };
   } 
-  componentDidMount() {
-    console.log('Chat ID:', this.state.chat_id);
 
-    if(this.state.chatDetails) {
-      console.log("Chat Details ID: ", this.state.chatDetails.id);
-    } else {
-      console.log("Chat Details is undefined");
-    }
+  componentDidMount() {
+    this.fetchContacts();
 
     this.focusListener = this.props.navigation.addListener('focus', () => {
       this.fetchContacts();
@@ -34,13 +31,17 @@ class AddToChatScreen extends Component {
     }
   }
 
+  setModalVisible = (visible, message) => {
+    this.setState({ modalVisible: visible, modalMessage: message });
+  };
+  
   fetchContacts = async () => {
     try {
       const response = await this.getContacts();
       this.setState({ contacts: response });
       this.filterContacts();
     } catch (error) {
-      console.error(error);
+      this.setModalVisible(true, error.toString());
     }
   };
 
@@ -81,82 +82,63 @@ class AddToChatScreen extends Component {
     }
   };
 
-  // AddUserToChat = async (chat_id, user_id) => {
-  //   try {
-  //     const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-  //       },
-  //     });
-
-  //     if (response.status === 200) {
-  //       const chatDetails = await response.json();
-  //       this.setState({ chatDetails });
-  //       console.log(`User with ID ${user_id} added to chat with ID ${chat_id}`);
-  //     } else if (response.status === 400) {
-  //       console.log('Bad Request');
-  //     } else if (response.status === 401) {
-  //       console.log('Unauthorised');
-  //       await AsyncStorage.removeItem('whatsthat_session_token');
-  //       await AsyncStorage.removeItem('whatsthat_user_id');
-  //       this.props.navigation.navigate('Login');
-  //     } else if (response.status === 403) {
-  //       console.log('Forbidden');
-  //     } else if (response.status === 404) {
-  //       console.log('Not Found');
-  //     } else {
-  //       throw new Error('Server Error');
-  //     }
-  //   } catch (error) {
-  //     console.log('Failed to add user to chat:', error);
-  //     Alert.alert('Error', error.toString());
-  //   }
-  // };
-
-  AddUserToChat = async (chat_id, user_id) => {
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-      });
-  
-      if (response.status === 200) {
-        const contentType = response.headers.get("content-type");
-        if(contentType && contentType.includes("application/json")) {
-          const chatDetails = await response.json();
-          this.setState({ chatDetails });
-        }
-        console.log(`User with ID ${user_id} added to chat with ID ${chat_id}`);
-      } else if (response.status === 400) {
-        console.log('Bad Request');
-      } else if (response.status === 401) {
-        console.log('Unauthorised');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw new Error('Server Error');
-      }
-    } catch (error) {
-      console.log('Failed to add user to chat:', error);
-      Alert.alert('Error', error.toString());
+ AddUserToChat = async (chat_id, user_id) => {
+  console.log('AddUserToChat called'); 
+  console.log('About to make fetch request');
+  try {
+    const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+      },
+    });
+    console.log('Fetch request completed');
+    if (response.status === 200) {
+      console.log(`User with ID ${user_id} added to chat with ID ${chat_id}`);
+      this.setModalVisible(true, `User with ID ${user_id} added to chat with ID ${chat_id}`);
+    } else if (response.status === 400) {
+      console.log('Bad Request');
+      this.setModalVisible(true, 'Bad Request'); 
+    } else if (response.status === 401) {
+      console.log('Unauthorised');
+      await AsyncStorage.removeItem('whatsthat_session_token');
+      await AsyncStorage.removeItem('whatsthat_user_id');
+      this.props.navigation.navigate('Login');
+    } else if (response.status === 403) {
+      console.log('Forbidden');
+    } else if (response.status === 404) {
+      console.log('Not Found');
+    } else {
+      console.log(`Response status is ${response.status}`);
+      throw new Error('Server Error');
     }
-  };
+  } catch (error) {
+    this.setModalVisible(true, error.toString());
+  }
+};
+
   
 
   render() {
-    const { filteredContacts, searchQuery } = this.state;
+    const { filteredContacts, searchQuery, modalVisible, modalMessage } = this.state;
     return (
       <View style={styles.container}>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>{modalMessage}</Text>
+              <TouchableOpacity style={styles.buttonClose} onPress={() => this.setModalVisible(false)}>
+                <Text style={styles.textStyle}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         <TextInput
           style={styles.input}
           placeholder="Search For Contacts"
@@ -184,7 +166,6 @@ class AddToChatScreen extends Component {
     );
   }
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -215,6 +196,43 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 18,
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
 });
+
 
 export default AddToChatScreen;

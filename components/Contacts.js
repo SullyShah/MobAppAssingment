@@ -290,31 +290,3 @@ const styles = StyleSheet.create({
 export default ContactScreen;
 
 
-     
-
-
-
-  // searchUsers = async (searchQuery) => {
-  //   try {
-  //     const response = await fetch(`http://localhost:3333/api/1.0.0/user?search=${encodeURIComponent(searchQuery)}`, {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-  //       },
-  //     });
-  //     if (response.status === 200) {
-  //       const user = await response.json();
-  //       return user;
-  //     } else if (response.status === 400) {
-  //       this.setModalVisible(true, 'Bad Request MY G');  
-  //       console.log("error")
-  //     } else if (response.status === 401) {
-  //       this.setModalVisible(true, 'Unauthorised');
-  //     }else {
-  //       this.setModalVisible(true, 'Server Error');
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };

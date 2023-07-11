@@ -79,7 +79,6 @@ class EditProfileScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-
       if (response.status === 200) {
         const user = await response.json();
         this.setState({ user });
