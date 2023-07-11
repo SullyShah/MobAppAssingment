@@ -125,13 +125,14 @@ class EditChatScreen extends Component {
     return (
       <View style={styles.container}>
         <TextInput
+
           value={this.state.messageContent}
           onChangeText={(text) => this.setState({ messageContent: text })}
           style={styles.input}
         />
-        <Button title="Update Message" onPress={this.editMessage.bind(this)} />
-    <Button title="Delete Message" onPress={this.deleteMessage.bind(this)} color="red" />
 
+        <Button title="Update Message" onPress={this.editMessage.bind(this)} />
+        <Button title="Delete Message" onPress={this.deleteMessage.bind(this)} color="red" />
         <Button title="Cancel" onPress={this.cancelEdit} />
       </View>
     );

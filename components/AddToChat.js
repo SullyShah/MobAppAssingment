@@ -11,7 +11,9 @@ class AddToChatScreen extends Component {
       searchQuery: '',
       chat_id: this.props.route.params.chat_id,
       user_id: '',
-      chatDetails: this.props.route.params.chatDetails,
+      //chatDetails: this.props.route.params.chatDetails,
+      chatDetails: [], // Initialize as an empty array
+
       modalVisible: false,
       modalMessage: '',
     };
@@ -22,6 +24,9 @@ class AddToChatScreen extends Component {
 
     this.focusListener = this.props.navigation.addListener('focus', () => {
       this.fetchContacts();
+      // Set the chatDetails state with the user objects already in the chat
+      this.setState({ chatDetails: chatDetailsData });
+
     });
   }
 
@@ -60,15 +65,16 @@ class AddToChatScreen extends Component {
   };
 
   filterContacts = () => {
-    const { searchQuery, contacts } = this.state;
+    const { searchQuery, contacts, chatDetails } = this.state;
     const filteredContacts = contacts.filter(
-      (contact) =>
-        String(contact.user_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(contact.first_name).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(contact.last_name).toLowerCase().includes(searchQuery.toLowerCase())
+      (contact) => !chatDetails.some((user) => user.user_id === contact.user_id) &&
+        (String(contact.user_id).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(contact.first_name).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(contact.last_name).toLowerCase().includes(searchQuery.toLowerCase()))
     );
     this.setState({ filteredContacts });
   };
+  
 
   SpecificContactSearch = (searchQuery) => {
     this.setState({ searchQuery }, this.filterContacts);
@@ -82,43 +88,43 @@ class AddToChatScreen extends Component {
     }
   };
 
- AddUserToChat = async (chat_id, user_id) => {
-  console.log('AddUserToChat called'); 
-  console.log('About to make fetch request');
-  try {
-    const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-      },
-    });
-    console.log('Fetch request completed');
-    if (response.status === 200) {
-      console.log(`User with ID ${user_id} added to chat with ID ${chat_id}`);
-      this.setModalVisible(true, `User with ID ${user_id} added to chat with ID ${chat_id}`);
-    } else if (response.status === 400) {
-      console.log('Bad Request');
-      this.setModalVisible(true, 'Bad Request'); 
-    } else if (response.status === 401) {
-      console.log('Unauthorised');
-      await AsyncStorage.removeItem('whatsthat_session_token');
-      await AsyncStorage.removeItem('whatsthat_user_id');
-      this.props.navigation.navigate('Login');
-    } else if (response.status === 403) {
-      console.log('Forbidden');
-    } else if (response.status === 404) {
-      console.log('Not Found');
-    } else {
-      console.log(`Response status is ${response.status}`);
-      throw new Error('Server Error');
+  AddUserToChat = async (chat_id, user_id) => {
+    console.log('AddUserToChat called'); 
+    console.log('About to make fetch request');
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+      console.log('Fetch request completed');
+      if (response.status === 200) {
+        console.log(`User with ID ${user_id} added to chat with ID ${chat_id}`);
+        this.setModalVisible(true, `User with ID ${user_id} added to chat with ID ${chat_id}`);
+        // Refresh contacts and filtered contacts after adding a user to the chat
+        this.fetchContacts();
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+        this.setModalVisible(true, 'Bad Request'); 
+      } else if (response.status === 401) {
+        console.log('Unauthorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else {
+        console.log(`Response status is ${response.status}`);
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      this.setModalVisible(true, error.toString());
     }
-  } catch (error) {
-    this.setModalVisible(true, error.toString());
-  }
-};
-
-  
+  };
 
   render() {
     const { filteredContacts, searchQuery, modalVisible, modalMessage } = this.state;
@@ -166,6 +172,7 @@ class AddToChatScreen extends Component {
     );
   }
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
