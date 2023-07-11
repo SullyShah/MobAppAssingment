@@ -16,6 +16,7 @@ class SingleChatScreen extends Component {
       isTyping: false,
       isDraft: false,
     };
+    this.timer = null;
   }
 
   componentDidMount() {
@@ -33,6 +34,9 @@ class SingleChatScreen extends Component {
         </TouchableOpacity>
       )
     });
+
+    
+
     AsyncStorage.getItem('whatsthat_user_id').then(userId => {
       console.log('Fetched user from AsyncStorage:', userId);
       if (userId) {
@@ -47,8 +51,28 @@ class SingleChatScreen extends Component {
       }
     });
 
-    
+    this.startPolling();
+
   }
+
+  componentWillUnmount() {
+    this.stopPolling();
+  } 
+
+
+  
+
+  startPolling = () => {
+    this.timer = setInterval(() => {
+      // Fetch new messages
+      const { currentchat_id } = this.state;
+      this.fetchNewMessages(currentchat_id);
+    }, 5000); // Poll every 5 seconds (adjust the interval as needed)
+  };
+  
+  stopPolling = () => {
+    clearInterval(this.timer);
+  };
 
   handleMessageLongPress = (message) => {
     const { currentchat_id } = this.state;
@@ -209,6 +233,38 @@ class SingleChatScreen extends Component {
       this.setState({ error: error });
     }
   }
+
+  fetchNewMessages = async (chat_id) => {
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        const chat = await response.json();
+        this.setState({
+          messages: chat.messages || []
+        });
+      } else if (response.status === 401) {
+        console.log('Unauthorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else {
+        throw 'Server Error';
+      }
+    } catch (error) {
+      console.log('Error fetching new messages:', error);
+    }
+  };
+  
   
   render() {
     const { singleChat, messages, currentUser } = this.state;
