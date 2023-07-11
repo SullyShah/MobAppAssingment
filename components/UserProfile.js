@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, Image, Button, StyleSheet, data } from 'react-native';
+import { Text, View, Image, Button, StyleSheet, data, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ProfileScreen extends Component {
@@ -74,11 +74,8 @@ class ProfileScreen extends Component {
       });
   
       if (response.status === 200) {
-        // Clear user-related data from AsyncStorage or perform any necessary cleanup
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
-  
-        // Redirect to login or initial screen
         this.props.navigation.navigate('Login');
       } else if (response.status === 401) {
         throw new Error('Unauthorised');
@@ -138,8 +135,9 @@ class ProfileScreen extends Component {
         <Text style={styles.label}>ID:</Text>
         <Text style={styles.text}>{user.user_id}</Text>
         <Button title="Edit Profile" onPress={this.handleEditProfile} />
-        <Button title="Log Out" onPress={this.LogOut} />
-
+        <TouchableOpacity style={styles.logoutButton} onPress={this.LogOut}>
+          <Text style={styles.buttonText}>Log Out</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -151,6 +149,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   profilePicture: {
     width: 150,
