@@ -220,7 +220,6 @@ class ContactScreen extends Component {
             </View>
           )}
         />
-
 <Modal
   animationType="slide"
   transparent={true}
@@ -232,14 +231,14 @@ class ContactScreen extends Component {
   <View style={styles.modalContainer}>
     <View style={styles.modalContent}>
     {this.state.selectedUser ? (
-        <View>
-          <Text style={styles.modalText}>
-            Name: {this.state.selectedUser.first_name} {this.state.selectedUser.last_name}
+        <View style={styles.userInfo}>
+          <Image source={{ uri: this.state.profilePicture }} style={styles.profilePicture} />
+          <Text style={styles.userName}>
+            {this.state.selectedUser.first_name} {this.state.selectedUser.last_name}
           </Text>
-          <Text style={styles.modalText}>
+          <Text style={styles.userEmail}>
             Email: {this.state.selectedUser.email}
           </Text>
-          <Image source={{ uri: this.state.profilePicture }} style={styles.profilePicture} />
         </View>
       ) : (
         <Text style={styles.modalText}>{this.state.modalContent}</Text>
@@ -256,7 +255,6 @@ class ContactScreen extends Component {
     </View>
   </View>
 </Modal>
-
 
       </View>
     );
@@ -310,27 +308,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
 
+  },modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
-    width: '50%',
-  },
-  modalText: {
-    marginBottom: 20,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    width: '80%',
   },
   profilePicture: {
     width: 150, 
     height: 150, 
-    borderRadius: 150,
-  }  
+    borderRadius: 75, 
+    marginBottom: 10,
+  },
+  userInfo: {
+    alignItems: 'center', 
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  userEmail: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
 });
-
 export default ContactScreen;
 
 
