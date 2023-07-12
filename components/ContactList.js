@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, Button, FlatList, TextInput, Alert, TouchableOpacity, Modal, Image } from 'react-native';
+import { StyleSheet, Text, View, Button, FlatList, TextInput, Alert, TouchableOpacity, Modal, Image, data } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ContactScreen extends Component {
@@ -13,6 +13,7 @@ class ContactScreen extends Component {
       modalContent: '',
       filteredContacts: [],
       selectedUser: null, 
+      profilePicture: data
     };
   }
 
@@ -47,10 +48,13 @@ class ContactScreen extends Component {
     this.filterContacts();
   };
 
-  showUserProfile = (item) => {
-    this.setState({ selectedUser: item });
+  showUserProfile = async (item) => {
+    console.log(item); // log the user object
+    const profilePicture = await this.GPI(item.user_id);
+    this.setState({ selectedUser: item, profilePicture });
     this.setModalVisible(true);
   };
+
   
 
   filterContacts = () => {
@@ -151,6 +155,27 @@ class ContactScreen extends Component {
     }
   };
 
+  GPI = async (userId) => {
+    try {
+      let response = await fetch(`http://localhost:3333/api/1.0.0/user/${userId}/photo`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        }
+      });
+  
+      let resBlob = await response.blob();
+      let data = URL.createObjectURL(resBlob);
+  
+      return data;
+    } catch(err) {
+      console.log("error", err);
+      return '';
+    }
+  };
+
+  
+
   render() {
     return (
       <View style={styles.container}>
@@ -206,7 +231,7 @@ class ContactScreen extends Component {
 >
   <View style={styles.modalContainer}>
     <View style={styles.modalContent}>
-      {this.state.selectedUser ? (
+    {this.state.selectedUser ? (
         <View>
           <Text style={styles.modalText}>
             Name: {this.state.selectedUser.first_name} {this.state.selectedUser.last_name}
@@ -214,15 +239,13 @@ class ContactScreen extends Component {
           <Text style={styles.modalText}>
             Email: {this.state.selectedUser.email}
           </Text>
-          <Text style={styles.modalText}>
-            User ID: {this.state.selectedUser.user_id}
-          </Text>
-          {/* Assuming your user object has a `profile_pic` property containing the URL of their profile picture */}
-          <Image source={{ uri: this.state.selectedUser.profilePicture }} style={styles.profilePicture} />
+          <Image source={{ uri: this.state.profilePicture }} style={styles.profilePicture} />
         </View>
       ) : (
         <Text style={styles.modalText}>{this.state.modalContent}</Text>
       )}
+
+
       <Button
         title="Close"
         onPress={() => {
@@ -301,11 +324,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  profilePic: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
+  profilePicture: {
+    width: 150, 
+    height: 150, 
+    borderRadius: 150,
+  }  
 });
 
 export default ContactScreen;
