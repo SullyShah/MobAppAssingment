@@ -19,6 +19,8 @@ import SendMessageScreen from './components/SendMessage';
 import SingleChatScreen from './components/SingleChat';
 import UpdateChatScreen from './components/UpdateChat';
 import EditChatScreen from './components/EditChat';
+import DraftMessageScreen from './components/DraftMessage';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -45,6 +47,8 @@ function ChatStack() {
       <Stack.Screen name="SingleChat" component={SingleChatScreen} options={{ title: 'Chat' }} />
       <Stack.Screen name="UpdateChat" component={UpdateChatScreen} options={{ title: 'Edit Chat' }} />
       <Stack.Screen name="EditChat" component={EditChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DraftMessage" component={DraftMessageScreen} options={{ headerShown: false }} />
+
     </Stack.Navigator>
   );
 }
