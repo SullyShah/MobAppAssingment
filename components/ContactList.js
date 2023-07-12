@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, Button, FlatList, TextInput, Alert, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, Text, View, Button, FlatList, TextInput, Alert, TouchableOpacity, Modal, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class ContactScreen extends Component {
