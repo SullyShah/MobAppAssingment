@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, Button, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { Text, View, TextInput, Button, Modal, TouchableOpacity, FlatList, StyleSheet  } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class AddContactsScreen extends Component {
@@ -46,7 +46,10 @@ class AddContactsScreen extends Component {
       this.setState({ filteredUsers: availableUsers });
     }
   };
-  
+
+    BackButton = () => {
+    this.props.navigation.goBack();
+  };
   
   
   handleAddUser = (user_id) => {
@@ -207,35 +210,33 @@ class AddContactsScreen extends Component {
     }
   };
 
+
   render() {
-    const { modalVisible, errorMessage, searchQuery, availableUsers } = this.state;
+    const { modalVisible, errorMessage, searchQuery, availableUsers, filteredUsers } = this.state;
 
     return (
       <View>
-<TextInput
-  placeholder="Search users by name"
-  onChangeText={this.handleSearchChange}
-  value={searchQuery}
-  style={{
-    padding: 10,
-    borderWidth: 2,
-    borderRadius: 5,
-    margin: 10,
-  }}
-/>
+        <TouchableOpacity onPress={this.BackButton}>
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
 
+        <TextInput
+          placeholder="Search users by name"
+          onChangeText={this.handleSearchChange}
+          value={searchQuery}
+          style={styles.searchInput}
+        />
 
-<FlatList
-  data={this.state.filteredUsers.length > 0 ? this.state.filteredUsers : availableUsers}
-  keyExtractor={(item, index) => item.user_id ? item.user_id.toString() : index.toString()}
-  renderItem={({ item }) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-      <Text>{item.given_name} {item.family_name}</Text>
-      <Button title="Add" onPress={() => this.handleAddUser(item.user_id)} />
-    </View>
-  )}
-/>
-
+        <FlatList
+          data={filteredUsers.length > 0 ? filteredUsers : availableUsers}
+          keyExtractor={(item, index) => item.user_id ? item.user_id.toString() : index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.userContainer}>
+              <Text>{item.given_name} {item.family_name}</Text>
+              <Button title="Add" onPress={() => this.handleAddUser(item.user_id)} />
+            </View>
+          )}
+        />
 
         <Modal
           animationType="slide"
@@ -245,18 +246,18 @@ class AddContactsScreen extends Component {
             this.setModalVisible(false);
           }}
         >
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
               <Text>{errorMessage}</Text>
               <TouchableOpacity
-                style={{ backgroundColor: 'blue', padding: 10, borderRadius: 5, marginTop: 10 }}
+                style={styles.modalButton}
                 onPress={() => {
                   this.setModalVisible(false);
                   if (errorMessage === 'Contact added successfully') {
                   }
                 }}
               >
-                <Text style={{ color: 'white' }}>Close</Text>
+                <Text style={styles.modalButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -266,6 +267,45 @@ class AddContactsScreen extends Component {
   }
 }
 
+const styles = StyleSheet.create({
+  backText: {
+    fontSize: 18,
+    color: 'blue',
+    textDecorationLine: 'underline',
+    marginLeft: 10,
+  },
+  searchInput: {
+    padding: 10,
+    borderWidth: 2,
+    borderRadius: 5,
+    margin: 10,
+  },
+  userContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButton: {
+    backgroundColor: 'blue',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  modalButtonText: {
+    color: 'white',
+  },
+});
+
 export default AddContactsScreen;
-
-

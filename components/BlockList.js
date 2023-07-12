@@ -18,6 +18,11 @@ class BlockedScreen extends Component {
     this.setState({ searchQuery });
   };
 
+    BackButton = () => {
+    this.props.navigation.goBack();
+  };
+
+
   async getBlockedList() {
     try {
       const response = await fetch("http://localhost:3333/api/1.0.0/blocked", {
@@ -81,6 +86,12 @@ class BlockedScreen extends Component {
 
     return (
       <View style={styles.container}>
+
+<TouchableOpacity onPress={this.BackButton} style={styles.header}>
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+
+
         <TextInput
           placeholder="Search by name"
           onChangeText={this.handleSearchChange}
@@ -173,6 +184,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  header: {
+    paddingVertical: 10,
+    alignItems: 'flex-start',
+  },
+  backText: {
+    fontSize: 18,
+    color: 'blue',
+    textDecorationLine: 'underline',
+    left: 10,
   },
 });
 

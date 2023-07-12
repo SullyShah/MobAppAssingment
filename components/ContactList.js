@@ -12,6 +12,7 @@ class ContactScreen extends Component {
       modalVisible: false,
       modalContent: '',
       filteredContacts: [],
+      selectedUser: null, 
     };
   }
 
@@ -47,14 +48,10 @@ class ContactScreen extends Component {
   };
 
   showUserProfile = (item) => {
-    console.log(item);
-    Alert.alert(
-      'User Profile',
-      `Name: ${item.first_name} ${item.last_name}\nEmail: ${item.email}`,
-      [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-      { cancelable: false }
-    );
+    this.setState({ selectedUser: item });
+    this.setModalVisible(true);
   };
+  
 
   filterContacts = () => {
     const { searchQuery, contacts } = this.state;
@@ -192,33 +189,52 @@ class ContactScreen extends Component {
                 </Text>
               </TouchableOpacity>
               <View style={styles.buttonContainer}>
-                <Button title="Remove" onPress={() => this.DeleteUser(item.user_id)} />
+                <Button title="Remove" onPress={() => this.DeleteUser(item.user_id)}  color="red" />
                 <Button title="Block" onPress={() => this.blockUser(item.user_id)} />
               </View>
             </View>
           )}
         />
 
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={this.state.modalVisible}
-          onRequestClose={() => {
-            this.setModalVisible(false);
-          }}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>{this.state.modalContent}</Text>
-              <Button
-                title="Close"
-                onPress={() => {
-                  this.setModalVisible(false);
-                }}
-              />
-            </View>
-          </View>
-        </Modal>
+<Modal
+  animationType="slide"
+  transparent={true}
+  visible={this.state.modalVisible}
+  onRequestClose={() => {
+    this.setModalVisible(false);
+  }}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      {this.state.selectedUser ? (
+        <View>
+          <Text style={styles.modalText}>
+            Name: {this.state.selectedUser.first_name} {this.state.selectedUser.last_name}
+          </Text>
+          <Text style={styles.modalText}>
+            Email: {this.state.selectedUser.email}
+          </Text>
+          <Text style={styles.modalText}>
+            User ID: {this.state.selectedUser.user_id}
+          </Text>
+          {/* Assuming your user object has a `profile_pic` property containing the URL of their profile picture */}
+          <Image source={{ uri: this.state.selectedUser.profilePicture }} style={styles.profilePicture} />
+        </View>
+      ) : (
+        <Text style={styles.modalText}>{this.state.modalContent}</Text>
+      )}
+      <Button
+        title="Close"
+        onPress={() => {
+          this.setModalVisible(false);
+          this.setState({ selectedUser: null });
+        }}
+      />
+    </View>
+  </View>
+</Modal>
+
+
       </View>
     );
   }
@@ -284,6 +300,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  profilePic: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
 });
 

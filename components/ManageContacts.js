@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import { View, Button, StyleSheet } from 'react-native';
 
 class ManageContactScreen extends Component {
-  handleGoBack = () => {
+
+  
+  BackButton = () => {
     this.props.navigation.goBack();
   };
 
@@ -30,7 +32,7 @@ class ManageContactScreen extends Component {
         <View style={styles.backButton}>
           <Button
             title="Back"
-            onPress={this.handleGoBack}
+            onPress={this.BackButton}
             style={styles.backButton}
           />
         </View>

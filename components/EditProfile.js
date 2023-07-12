@@ -69,6 +69,11 @@ class EditProfileScreen extends Component {
     });
   };
 
+  BackButton = () => {
+    this.props.navigation.goBack();
+  };
+
+
   getCurrentUserInfo = async () => {
     const user_id = await AsyncStorage.getItem('whatsthat_user_id');
     try {
@@ -98,12 +103,49 @@ class EditProfileScreen extends Component {
     const { user } = this.state;
     const user_id = await AsyncStorage.getItem('whatsthat_user_id');  
     let data = {};
-    if(user.first_name) data.first_name = user.first_name;
-    if(user.last_name) data.last_name = user.last_name;
-    if(user.email) data.email = user.email;
-    if(user.password) {
+    if (!user.first_name || user.first_name.trim() === '') {
+      this.showErrorModal('First name is required');
+      return;
+    } else {
+      data.first_name = user.first_name;
+    }
+  
+    if (!user.last_name || user.last_name.trim() === '') {
+      this.showErrorModal('Last name is required');
+      return;
+    } else {
+      data.last_name = user.last_name;
+    }
+  
+    if (!user.email || !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email))) {
+      this.showErrorModal('Valid email is required');
+      return;
+    } else {
+      data.email = user.email;
+    }
+  
+    if (user.password) {
+      // Password should be at least 8 characters long
+      if (user.password.length < 8) {
+        this.showErrorModal('Password should be at least 8 characters long');
+        return;
+      }
+    
+      // Password should contain at least one number
+      if (!/\d/.test(user.password)) {
+        this.showErrorModal('Password should contain at least one number');
+        return;
+      }
+    
+      // Password should contain at least one uppercase letter
+      if (!/[A-Z]/.test(user.password)) {
+        this.showErrorModal('Password should contain at least one uppercase letter');
+        return;
+      }
+    
       data.password = user.password;
     }
+    
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}`, {
         method: 'PATCH',
@@ -191,12 +233,21 @@ class EditProfileScreen extends Component {
         <Text style={styles.label}>Password:</Text>
         <TextInput
           style={styles.input}
-          secureTextEntry={true}
+          secureTextEntry={false}
           value={user.password || ''}
           onChangeText={(text) => this.handleInputChange('password', text)}
         />
 
         <Button title="Update Info" onPress={this.updateUserInfo} />
+
+        
+        <View style={styles.backButton}>
+          <Button
+            title="Back"
+            onPress={this.BackButton}
+            style={styles.backButton}
+          />
+        </View>
  
         <Modal visible={showModal} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
@@ -252,6 +303,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
   },
+  backButton: {
+    width: '20%',
+    position: 'absolute',
+    bottom: 20,
+  },  
 });
 
 export default EditProfileScreen;
