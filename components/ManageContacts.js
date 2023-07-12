@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
-import { Text, View, Button, Alert, StyleSheet } from 'react-native';
+import { View, Button, StyleSheet } from 'react-native';
 
 class ManageContactScreen extends Component {
+  handleGoBack = () => {
+    this.props.navigation.goBack();
+  };
+
   render() {
     return (
       <View style={styles.container}>
@@ -19,7 +23,15 @@ class ManageContactScreen extends Component {
         <View style={styles.buttonContainer}>
           <Button
             title="Unblock Contact"
-            onPress={() => this.props.navigation.navigate('Block')}
+            onPress={() => this.props.navigation.navigate('BlockList')}
+          />
+        </View>
+
+        <View style={styles.backButton}>
+          <Button
+            title="Back"
+            onPress={this.handleGoBack}
+            style={styles.backButton}
           />
         </View>
       </View>
@@ -37,6 +49,11 @@ const styles = StyleSheet.create({
     width: '80%',
     marginBottom: 20,
   },
+  backButton: {
+    width: '30%',
+    position: 'absolute',
+    bottom: 20,
+  },  
 });
 
 export default ManageContactScreen;
