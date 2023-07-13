@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ScrollView, TextInput, Button, View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { TextInput, Button, View, Text, StyleSheet, Alert, TouchableOpacity, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 
@@ -32,7 +32,7 @@ class SingleChatScreen extends Component {
             Edit Chat
           </Text>
         </TouchableOpacity>
-      )
+      ) 
     });
   
     AsyncStorage.getItem('whatsthat_user_id').then(userId => {
@@ -49,7 +49,8 @@ class SingleChatScreen extends Component {
         this.setState({ isDraft: false }); // Set isDraft to false if no draft message
       }
     });
-  
+
+    this.loadDraftMessage(); // Call loadDraftMessage function
     this.startPolling();
   }
   
@@ -95,30 +96,50 @@ class SingleChatScreen extends Component {
   
   loadDraftMessage = async () => {
     AsyncStorage.getItem('whatsthat_draft_message').then(draftMessage => {
-      if (draftMessage && !this.state.newMessage) {
+      if (draftMessage) {
         this.setState({ newMessage: draftMessage, isDraft: true });
       } else {
-        this.setState({ newMessage: '', isDraft: false }); // Clear the newMessage and isDraft states if there's no draft message
+        this.setState({ newMessage: '', isDraft: false });
       }
     });
   };
   
-
   sendMessage = async () => {
     if (this.state.newMessage && this.state.currentchat_id) {
-      try {
-        const messageToSend = this.state.newMessage; // Store the message to be sent
-
-        // Clear the text input before sending the message
-        this.setState({ newMessage: '', isTyping: false });
+      const messageToSend = this.state.newMessage; // Store the message to be sent
   
+      try {
         await this.SendMessage(this.state.currentchat_id, messageToSend);
-        this.viewSingleChat(this.state.currentchat_id);
+        await AsyncStorage.setItem('whatsthat_user_id', this.state.currentUser.toString()); // Set the current user ID again
+        this.setState({ newMessage: '', isTyping: false, isDraft: false });
       } catch (error) {
         Alert.alert('Error', error.toString());
       }
     }
   };
+  
+  navigateToDraftScreen = () => {
+    const { navigation } = this.props;
+    const { newMessage, currentchat_id } = this.state;
+    navigation.navigate('DraftMessage', {
+      draftMessage: newMessage,
+      chat_id: currentchat_id,
+    });
+  };
+  
+  handleEditDraft = (updatedDraftMessage) => {
+    this.setState({ newMessage: updatedDraftMessage });
+    AsyncStorage.setItem('whatsthat_draft_message', updatedDraftMessage);
+  };
+
+  handleDeleteDraft = () => {
+    this.setState({ newMessage: '', isDraft: false });
+  };
+
+  handleSendDraft = (draftMessage) => {
+    this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
+  };
+
   
   async viewSingleChat(chat_id) {
     try {
@@ -170,7 +191,7 @@ class SingleChatScreen extends Component {
         await AsyncStorage.removeItem('whatsthat_draft_message');
         this.setState({
           chatDetails: chatDetails,
-          messages: chatDetails.messages || [], // Update messages
+          messages: chatDetails.messages || [],
         });
       } else if (response.status === 400) {
         console.log('Bad Request');
@@ -221,48 +242,21 @@ class SingleChatScreen extends Component {
       }
     };
 
-    navigateToDraftScreen = () => {
-      const { navigation } = this.props;
-      const { newMessage } = this.state;
-      navigation.navigate('DraftMessage', {
-        draftMessage: newMessage,
-        onEditDraft: this.handleEditDraft, // Pass the handleEditDraft function
-        onDeleteDraft: this.handleDeleteDraft, // Pass the handleDeleteDraft function
-        onSendDraft: this.handleSendDraft, // Pass the handleSendDraft function
-      });
-    };
-    
-    
-    handleEditDraft = (updatedDraftMessage) => {
-      this.setState({ newMessage: updatedDraftMessage });
-      AsyncStorage.setItem('whatsthat_draft_message', updatedDraftMessage);
-    };
-    
-    
-  
-    handleDeleteDraft = () => {
-      this.setState({ newMessage: '', isDraft: false });
-    };
-  
-    handleSendDraft = (draftMessage) => {
-      this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
-    };
-
     render() {
       const { singleChat, messages, currentUser, newMessage, isTyping, isDraft } = this.state;
-  
+    
       if (!singleChat) {
         return <Text>Loading...</Text>;
       }
-  
-      const reversedMessages = [...messages].reverse();
-  
+    
       return (
         <View style={styles.container}>
-          <ScrollView style={styles.messagesContainer}>
-            {reversedMessages.map((msg, index) => (
+          <FlatList
+            inverted
+            data={messages}
+            keyExtractor={(item) => item.message_id.toString()}
+            renderItem={({ item: msg }) => (
               <TouchableOpacity
-                key={msg.message_id}
                 onLongPress={() => this.handleMessageLongPress(msg)}
               >
                 <View
@@ -278,8 +272,8 @@ class SingleChatScreen extends Component {
                   </Text>
                 </View>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
+          />
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -292,11 +286,14 @@ class SingleChatScreen extends Component {
                 <Text style={styles.buttonText}>Save Draft</Text>
               </TouchableOpacity>
             )}
-         {isDraft && (
+
+{isDraft && newMessage === '' && (
   <TouchableOpacity onPress={this.navigateToDraftScreen}>
     <Text style={styles.buttonText}>Load Draft</Text>
   </TouchableOpacity>
 )}
+
+
 
             <Button title="Send" onPress={this.sendMessage} />
           </View>
@@ -304,7 +301,7 @@ class SingleChatScreen extends Component {
       );
     }
   }
-  
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -315,6 +312,7 @@ class SingleChatScreen extends Component {
     },
     messageBox: {
       marginVertical: 10,
+      marginHorizontal: 10, 
       padding: 10,
       borderRadius: 5,
       borderColor: '#ccc',

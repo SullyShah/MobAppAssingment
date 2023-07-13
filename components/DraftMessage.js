@@ -35,15 +35,57 @@ class DraftMessageScreen extends Component {
     }
   };
 
-  handleSendDraft = () => {
+  handleSendDraft = async () => {
     const { navigation, route } = this.props;
-    const { onSendDraft } = route.params;
     const { draftMessage } = this.state;
-    onSendDraft(draftMessage); // Pass the draft message to onSendDraft function
-    navigation.goBack();
+    const chat_id = route.params.chat_id; // Make sure you pass chat_id when navigating to this screen
+    try {
+      await this.SendMessage(chat_id, draftMessage);
+      await AsyncStorage.removeItem('whatsthat_draft_message');
+      navigation.goBack();
+    } catch (error) {
+      console.log('Error sending draft message:', error);
+    }
   };
-  
-  
+
+  async SendMessage(chat_id, message) {
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+        body: JSON.stringify({
+          message: message,
+        }),
+      });
+      if (response.status === 200) {
+        const chatDetails = await response.json();
+        await AsyncStorage.removeItem('whatsthat_draft_message');
+        this.setState({
+          chatDetails: chatDetails,
+          messages: chatDetails.messages || [], // Update messages
+        });
+      } else if (response.status === 400) {
+        console.log('Bad Request');
+      } else if (response.status === 401) {
+        console.log('Unathorised');
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        this.props.navigation.navigate('Login');
+      } else if (response.status === 403) {
+        console.log('Forbidden');
+      } else if (response.status === 404) {
+        console.log('Not Found');
+      } else {
+        throw 'Server Error';
+      }
+    } catch (error) {
+      this.setState({ error: error });
+    }
+  }
+
   handleEditButton = async () => {
     try {
       const { draftMessage } = this.state;
@@ -63,6 +105,15 @@ class DraftMessageScreen extends Component {
     this.setState({ draftMessage: text });
   };
 
+  sendDraftMessage = async () => {
+    const { route } = this.props;
+    const { chat_id, draftMessage } = route.params;
+    
+    // Use your function that sends the message. Here is a sample usage.
+    await this.props.sendMessage(chat_id, draftMessage);
+  };
+  
+
   render() {
     const { draftMessage } = this.state;
 
@@ -77,9 +128,8 @@ class DraftMessageScreen extends Component {
         <Button title="Send Draft" onPress={this.handleSendDraft} />
         <Button title="Delete Draft" onPress={this.handleDeleteDraft} />
         <Button title="Cancel" onPress={this.handleCancel} />
-        
       </View>
-    );
+    ); 
   }
 }
 
