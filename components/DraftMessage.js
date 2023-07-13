@@ -9,7 +9,7 @@ class DraftMessageScreen extends Component {
       draftMessage: '',
     };
   }
-
+  
   componentDidMount() {
     this.loadDraftMessage();
   }
