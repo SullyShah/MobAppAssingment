@@ -181,9 +181,6 @@ class ContactScreen extends Component {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Contacts</Text>
-          <TouchableOpacity onPress={() => this.props.navigation.navigate('NewChat')}>
-            <Text style={styles.createChatText}>Create Chat</Text>
-          </TouchableOpacity>
         </View>
 
         <TextInput
@@ -268,18 +265,15 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'center', // Center horizontally
+    alignItems: 'center', // Center vertically
     marginBottom: 10,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 30,
     fontWeight: 'bold',
-  },
-  createChatText: {
-    color: 'blue',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    fontFamily: 'Oswald', // Example font family
+
   },
   input: {
     padding: 10,

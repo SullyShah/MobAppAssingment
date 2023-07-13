@@ -139,62 +139,63 @@ class BlockedScreen extends Component {
       );
     }
   }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  searchInput: {
-    padding: 10,
-    borderWidth: 2,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  userContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  userName: {
-    fontSize: 20,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: 'gray',
-    marginVertical: 5,
-  },
-  listContainer: {
-    flexGrow: 1,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
-    marginBottom: 20,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  header: {
-    paddingVertical: 10,
-    alignItems: 'flex-start',
-  },
-  backText: {
-    fontSize: 18,
-    color: 'blue',
-    textDecorationLine: 'underline',
-    left: 10,
-  },
-});
-
-export default BlockedScreen;
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 10,
+    },
+    searchInput: {
+      padding: 10,
+      borderWidth: 2,
+      borderRadius: 5,
+      marginBottom: 10,
+    },
+    userContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    userName: {
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    separator: {
+      height: 1,
+      backgroundColor: 'gray',
+      marginVertical: 5,
+    },
+    listContainer: {
+      flexGrow: 1,
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: 'white',
+      padding: 20,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    modalText: {
+      marginBottom: 20,
+      fontSize: 18,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    header: {
+      paddingVertical: 10,
+      alignItems: 'flex-start',
+    },
+    backText: {
+      fontSize: 18,
+      color: 'blue',
+      textDecorationLine: 'underline',
+      marginLeft: 10,
+    },
+  });
+  
+  export default BlockedScreen;
+  

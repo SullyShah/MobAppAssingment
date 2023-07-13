@@ -11,6 +11,7 @@ class EditProfileScreen extends Component {
         last_name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         profilePicture: null
       },
       isLoading: false,
@@ -143,6 +144,12 @@ class EditProfileScreen extends Component {
         return;
       }
     
+      // Confirm password should match the password
+      if (user.confirmPassword !== user.password) {
+        this.showErrorModal('Confirm password does not match');
+        return;
+      }
+    
       data.password = user.password;
     }
     
@@ -238,9 +245,16 @@ class EditProfileScreen extends Component {
           onChangeText={(text) => this.handleInputChange('password', text)}
         />
 
+<Text style={styles.label}>Confirm Password:</Text>
+        <TextInput
+          style={styles.input}
+          secureTextEntry={false}
+          value={user.confirmPassword || ''}
+          onChangeText={(text) => this.handleInputChange('confirmPassword', text)}
+        />
+
         <Button title="Update Info" onPress={this.updateUserInfo} />
 
-        
         <View style={styles.backButton}>
           <Button
             title="Back"
@@ -248,7 +262,7 @@ class EditProfileScreen extends Component {
             style={styles.backButton}
           />
         </View>
- 
+
         <Modal visible={showModal} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -307,7 +321,8 @@ const styles = StyleSheet.create({
     width: '20%',
     position: 'absolute',
     bottom: 20,
-  },  
+  },
 });
 
 export default EditProfileScreen;
+

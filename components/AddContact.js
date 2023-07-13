@@ -47,7 +47,7 @@ class AddContactsScreen extends Component {
     }
   };
 
-    BackButton = () => {
+  BackButton = () => {
     this.props.navigation.goBack();
   };
   
@@ -215,7 +215,7 @@ class AddContactsScreen extends Component {
     const { modalVisible, errorMessage, searchQuery, availableUsers, filteredUsers } = this.state;
 
     return (
-      <View>
+      <View style={styles.container}>
         <TouchableOpacity onPress={this.BackButton}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
@@ -229,10 +229,10 @@ class AddContactsScreen extends Component {
 
         <FlatList
           data={filteredUsers.length > 0 ? filteredUsers : availableUsers}
-          keyExtractor={(item, index) => item.user_id ? item.user_id.toString() : index.toString()}
+          keyExtractor={(item, index) => (item.user_id ? item.user_id.toString() : index.toString())}
           renderItem={({ item }) => (
             <View style={styles.userContainer}>
-              <Text>{item.given_name} {item.family_name}</Text>
+              <Text style={styles.userName}>{item.given_name} {item.family_name}</Text>
               <Button title="Add" onPress={() => this.handleAddUser(item.user_id)} />
             </View>
           )}
@@ -248,7 +248,7 @@ class AddContactsScreen extends Component {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text>{errorMessage}</Text>
+              <Text style={styles.modalText}>{errorMessage}</Text>
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
@@ -266,25 +266,36 @@ class AddContactsScreen extends Component {
     );
   }
 }
-
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+  },
   backText: {
     fontSize: 18,
     color: 'blue',
     textDecorationLine: 'underline',
     marginLeft: 10,
+    marginBottom: 10, // Added margin bottom
   },
   searchInput: {
     padding: 10,
     borderWidth: 2,
     borderRadius: 5,
-    margin: 10,
+    marginBottom: 10,
   },
   userContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    borderBottomWidth: 1, // Added border bottom
+    borderBottomColor: 'gray', // Added border color
+    paddingBottom: 5, // Added padding bottom
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -297,9 +308,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+  modalText: {
+    marginBottom: 20,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   modalButton: {
     backgroundColor: 'blue',
-    padding: 10,
+    padding: 12, // Increased padding
     borderRadius: 5,
     marginTop: 10,
   },

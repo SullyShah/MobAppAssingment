@@ -42,7 +42,7 @@ class NewChatScreen extends Component {
       if (response.status === 201) {
         const chatDetails = await response.json();
         console.log("Chat Details: ", chatDetails);
-        this.props.navigation.navigate('Chat', {
+        this.props.navigation.navigate('Chats', {
           chat_id: chatDetails.id,
           chatDetails: chatDetails
         });

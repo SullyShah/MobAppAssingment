@@ -86,13 +86,13 @@ const styles = {
   container: {
     flex: 1,
     paddingHorizontal: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#E6E6FA',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#green', // change this to your desired color
+    backgroundColor: '#808080', 
     padding: 10,
     borderRadius: 8,
     marginVertical: 10,
@@ -108,14 +108,14 @@ const styles = {
   },
   chatContainer: {
     borderColor: '#ccc',
-    borderWidth: 1,
+    borderWidth: 3,
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
   },
   singleChatContainer: {
     borderColor: '#ccc',
-    borderWidth: 1,
+    borderWidth: 3,
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,

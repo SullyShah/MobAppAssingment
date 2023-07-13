@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, Button, TextInput, StyleSheet, Alert, Modal, TouchableOpacity } from 'react-native';
+import { Text, View, Button, TextInput, StyleSheet, Alert, Modal, TouchableOpacity, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -112,46 +112,50 @@ class LoginScreen extends Component {
 
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Sign In</Text>
-
-
-
-        <View style={styles.inputContainer}>
-          <Icon name="envelope" size={20} color="gray" style={styles.icon} />
-          <TextInput
-            placeholder="Email"
-            onChangeText={(text) => this.setState({ email: text })}
-            style={styles.input}
-          />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>WhatsThat</Text>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Icon name="lock" size={20} color="gray" style={styles.icon} />
-          <TextInput
-            placeholder="Password"
-            secureTextEntry={true}
-            onChangeText={(text) => this.setState({ password: text })}
-            style={styles.input}
-          />
-        </View>
+        <View style={styles.formContainer}>
+          <Text style={styles.signup}>Sign In</Text>
 
-        {this.state.error !== '' && (
-          <Text style={styles.errorText}>{this.state.error}</Text>
-        )}
+          <View style={styles.inputContainer}>
+            <Icon name="envelope" size={20} color="gray" style={styles.icon} />
+            <TextInput
+              placeholder="Email"
+              onChangeText={(text) => this.setState({ email: text })}
+              style={styles.input}
+            />
+          </View>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Log In"
-            onPress={() => this.login()}
-            style={styles.button}
-          />
+          <View style={styles.inputContainer}>
+            <Icon name="lock" size={20} color="gray" style={styles.icon} />
+            <TextInput
+              placeholder="Password"
+              secureTextEntry={true}
+              onChangeText={(text) => this.setState({ password: text })}
+              style={styles.input}
+            />
+          </View>
 
-          <Button
-            title="Sign Up"
-            onPress={() => this.props.navigation.navigate('Signup')}
-            style={[styles.button, styles.signUpButton]}
-          />
+          {this.state.error !== '' && (
+            <Text style={styles.errorText}>{this.state.error}</Text>
+          )}
+
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Log In"
+              onPress={() => this.login()}
+              style={styles.button}
+            />
+
+            <Button
+              title="Sign Up"
+              onPress={() => this.props.navigation.navigate('Signup')}
+              style={[styles.button, styles.signUpButton]}
+            />
+          </View>
         </View>
 
         <Modal
@@ -191,8 +195,7 @@ class LoginScreen extends Component {
             </View>
           </View>
         </Modal>
-
-      </View>
+      </SafeAreaView>
     );
   }
 }
@@ -200,11 +203,24 @@ class LoginScreen extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#EAF5E2',
+  },
+  titleContainer: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    fontFamily: 'Kanit',
+  },
+  formContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  title: {
+  signup: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -213,6 +229,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+    width: '100%',
   },
   input: {
     flex: 1,
@@ -231,40 +248,40 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 10,
+    width: '100%',
+    height: 40,
   },
   signUpButton: {
     backgroundColor: 'gray',
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalText: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  modalButton: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  modalButtonText: {
-    color: 'white',
-    fontSize: 16,
-  },
+  errorText: {    color: 'red',
+  marginBottom: 10,
+},
+modalContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+modalContent: {
+  backgroundColor: 'white',
+  padding: 20,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+modalText: {
+  fontSize: 18,
+  marginBottom: 10,
+},
+modalButton: {
+  backgroundColor: 'blue',
+  padding: 10,
+  borderRadius: 5,
+  marginTop: 10,
+},
+modalButtonText: {
+  color: 'white',
+  fontSize: 16,
+},
 });
 
 export default LoginScreen;
-

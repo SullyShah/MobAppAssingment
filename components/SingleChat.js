@@ -24,7 +24,6 @@ class SingleChatScreen extends Component {
     const { chat_id } = route.params;
     this.viewSingleChat(chat_id);
     this.setState({ currentchat_id: chat_id });
-    this.loadDraftMessage();
     navigation.setOptions({
       title: chat_id,
       headerRight: () => (
@@ -35,22 +34,25 @@ class SingleChatScreen extends Component {
         </TouchableOpacity>
       )
     });
-
+  
     AsyncStorage.getItem('whatsthat_user_id').then(userId => {
       console.log('Fetched user from AsyncStorage:', userId);
       if (userId) {
         this.setState({ currentUser: Number(userId) });
       }
     });
-
+  
     AsyncStorage.getItem('whatsthat_draft_message').then(draftMessage => {
       if (draftMessage) {
-        this.setState({ draftMessage });
+        this.setState({ draftMessage, isDraft: true }); // Set isDraft to true
+      } else {
+        this.setState({ isDraft: false }); // Set isDraft to false if no draft message
       }
     });
-
+  
     this.startPolling();
   }
+  
 
   componentWillUnmount() {
     this.stopPolling();
@@ -58,10 +60,9 @@ class SingleChatScreen extends Component {
 
   startPolling = () => {
     this.timer = setInterval(() => {
-      // Fetch new messages
       const { currentchat_id } = this.state;
       this.fetchNewMessages(currentchat_id);
-    }, 1000); // Poll every 5 seconds (adjust the interval as needed)
+    }, 100); 
   };
 
   stopPolling = () => {
@@ -91,29 +92,34 @@ class SingleChatScreen extends Component {
       this.setState({ isTyping: false, isDraft: true, newMessage: '' });
     }
   };
-
+  
   loadDraftMessage = async () => {
     AsyncStorage.getItem('whatsthat_draft_message').then(draftMessage => {
-      if (draftMessage) {
-        AsyncStorage.removeItem('whatsthat_draft_message').then(() => {
-          this.setState({ newMessage: draftMessage, isDraft: false }); // Clear the draft message from AsyncStorage
-        });
+      if (draftMessage && !this.state.newMessage) {
+        this.setState({ newMessage: draftMessage, isDraft: true });
+      } else {
+        this.setState({ newMessage: '', isDraft: false }); // Clear the newMessage and isDraft states if there's no draft message
       }
     });
   };
+  
 
   sendMessage = async () => {
     if (this.state.newMessage && this.state.currentchat_id) {
       try {
-        await this.SendMessage(this.state.currentchat_id, this.state.newMessage);
-        this.setState({ newMessage: '' });
+        const messageToSend = this.state.newMessage; // Store the message to be sent
+
+        // Clear the text input before sending the message
+        this.setState({ newMessage: '', isTyping: false });
+  
+        await this.SendMessage(this.state.currentchat_id, messageToSend);
         this.viewSingleChat(this.state.currentchat_id);
       } catch (error) {
         Alert.alert('Error', error.toString());
       }
     }
   };
-
+  
   async viewSingleChat(chat_id) {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
@@ -214,19 +220,25 @@ class SingleChatScreen extends Component {
         console.log('Error fetching new messages:', error);
       }
     };
+
     navigateToDraftScreen = () => {
       const { navigation } = this.props;
       const { newMessage } = this.state;
       navigation.navigate('DraftMessage', {
         draftMessage: newMessage,
-        onSendDraft: this.sendMessage, // Pass the sendMessage function
+        onEditDraft: this.handleEditDraft, // Pass the handleEditDraft function
+        onDeleteDraft: this.handleDeleteDraft, // Pass the handleDeleteDraft function
+        onSendDraft: this.handleSendDraft, // Pass the handleSendDraft function
       });
     };
     
-  
+    
     handleEditDraft = (updatedDraftMessage) => {
       this.setState({ newMessage: updatedDraftMessage });
+      AsyncStorage.setItem('whatsthat_draft_message', updatedDraftMessage);
     };
+    
+    
   
     handleDeleteDraft = () => {
       this.setState({ newMessage: '', isDraft: false });
@@ -280,11 +292,12 @@ class SingleChatScreen extends Component {
                 <Text style={styles.buttonText}>Save Draft</Text>
               </TouchableOpacity>
             )}
-            {isDraft && (
-              <TouchableOpacity onPress={this.navigateToDraftScreen}>
-                <Text style={styles.buttonText}>Load Draft</Text>
-              </TouchableOpacity>
-            )}
+         {isDraft && (
+  <TouchableOpacity onPress={this.navigateToDraftScreen}>
+    <Text style={styles.buttonText}>Load Draft</Text>
+  </TouchableOpacity>
+)}
+
             <Button title="Send" onPress={this.sendMessage} />
           </View>
         </View>
