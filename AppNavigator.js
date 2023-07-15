@@ -6,7 +6,7 @@ import LoginScreen from './components/Login';
 import SignupScreen from './components/Signup';
 import AddContactsScreen from './components/AddContact';
 import BlockedScreen from './components/BlockList';
-import ChatScreen from './components/ChatList';
+import ChatListScreen from './components/ChatList';
 import ContactScreen from './components/ContactList';
 import DeleteContactScreen from './components/DeleteContact';
 import AddToChatScreen from './components/AddToChat';
@@ -40,7 +40,7 @@ function ContactStack() {
 function ChatStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="ChatList" component={ChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SendMessage" component={SendMessageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddToChat" component={AddToChatScreen} options={{ headerShown: false }} />

@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
-import { View, TextInput, Button, StyleSheet } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import moment from 'moment';
 
 class DraftMessageScreen extends Component {
   constructor(props) {
@@ -8,9 +12,11 @@ class DraftMessageScreen extends Component {
     this.state = {
       draftMessage: '',
       chat_id: '',
+      scheduledDate: new Date(),
+      showDatePicker: false,
     };
   }
-  
+
   componentDidMount() {
     const { route } = this.props;
     const { chat_id } = route.params;
@@ -23,6 +29,10 @@ class DraftMessageScreen extends Component {
       const draftMessage = await AsyncStorage.getItem(`whatsthat_draft_message_${chat_id}`);
       if (draftMessage) {
         this.setState({ draftMessage });
+      }
+      const scheduledDate = await AsyncStorage.getItem(`whatsthat_draft_scheduledDate_${chat_id}`);
+      if (scheduledDate) {
+        this.setState({ scheduledDate: new Date(JSON.parse(scheduledDate)) });
       }
     } catch (error) {
       console.log('Error loading draft message:', error);
@@ -42,17 +52,19 @@ class DraftMessageScreen extends Component {
 
   handleSendDraft = async () => {
     const { navigation } = this.props;
-    const { draftMessage, chat_id } = this.state;
+    const { draftMessage, chat_id, scheduledDate } = this.state;
+  
     try {
-      await this.SendMessage(chat_id, draftMessage);
-      await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
+      await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
+      await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
+      this.scheduleMessage();
       navigation.goBack();
     } catch (error) {
       console.log('Error sending draft message:', error);
     }
   };
 
-  SendMessage = async (chat_id, message) => {
+  sendMessageWithDraft = async (chat_id, draftMessage) => {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
         method: 'POST',
@@ -61,20 +73,27 @@ class DraftMessageScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
         body: JSON.stringify({
-          message: message,
+          message: draftMessage,
         }),
       });
+  
       if (response.status === 200) {
         const chatDetails = await response.json();
         await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
-        this.setState({
+        await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
+        this.setState((prevState) => ({
           chatDetails: chatDetails,
-          messages: chatDetails.messages || [], // Update messages
-        });
+          messages: chatDetails.messages || [],
+          draftMessage: '', // Remove the draft message from state
+        }));
+  
+        // Delete the draft message and scheduled date from local storage
+        await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
+        await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
       } else if (response.status === 400) {
         console.log('Bad Request');
       } else if (response.status === 401) {
-        console.log('Unathorised');
+        console.log('Unauthorized');
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
         this.props.navigation.navigate('Login');
@@ -89,11 +108,14 @@ class DraftMessageScreen extends Component {
       this.setState({ error: error });
     }
   };
+  
 
   handleEditButton = async () => {
-    const { draftMessage, chat_id } = this.state;
+    const { draftMessage, chat_id, scheduledDate } = this.state;
     try {
       await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
+      await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
+      this.scheduleMessage();
       this.props.navigation.goBack();
     } catch (error) {
       console.log('Error saving edited draft message:', error);
@@ -109,8 +131,54 @@ class DraftMessageScreen extends Component {
     this.setState({ draftMessage: text });
   };
 
+  scheduleMessage = async () => {
+    const { chat_id, scheduledDate, draftMessage } = this.state;
+  
+    try {
+      const now = new Date();
+      const delay = scheduledDate.getTime() - now.getTime();
+  
+      if (delay > 0) {
+        setTimeout(async () => {
+          await this.sendMessageWithDraft(chat_id, draftMessage);
+          // Delete the draft message and scheduled date from local storage
+          await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
+          await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
+        }, delay);
+      } else {
+        console.log('Scheduled date and time must be in the future.');
+      }
+    } catch (error) {
+      console.log('Error scheduling message:', error);
+    }
+  };
+  
+  
+  
+  handleDateChange = (selectedDate) => {
+    const currentDate = moment();
+    const selected = moment(selectedDate);
+  
+    if (selected.isSameOrAfter(currentDate, 'day')) {
+      if (selected.isSame(currentDate, 'day') && selected.isBefore(currentDate)) {
+        // Selected time is in the past within the current day
+        console.log('Cannot select a past time within the current day');
+      } else {
+        this.setState({ scheduledDate: selectedDate, showDatePicker: false });
+      }
+    } else {
+      // Selected date is in the past
+      console.log('Cannot select a past date');
+    }
+  };
+  
+  showDatePicker = () => {
+    this.setState({ showDatePicker: true });
+  };
+
   render() {
-    const { draftMessage, isDraft } = this.state;
+    const { draftMessage, scheduledDate, showDatePicker } = this.state;
+    const formattedDate = moment(scheduledDate).format('DD/MM/HH:mm');
   
     return (
       <View style={styles.container}>
@@ -119,9 +187,25 @@ class DraftMessageScreen extends Component {
           value={draftMessage}
           onChangeText={this.handleEditMessage}
         />
-        {isDraft && (
-          <Button title="Load Draft" onPress={this.handleLoadDraft} />
-        )}
+        <Button title="Select Date" onPress={this.showDatePicker} />
+        {showDatePicker && (Platform.OS === 'web' ? (
+          <DatePicker
+            selected={scheduledDate}
+            onChange={this.handleDateChange}
+            showTimeSelect
+            dateFormat="dd/MM/yyyy HH:mm"
+            minDate={new Date()} // Restrict to current date onwards
+          />
+        ) : (
+          <DateTimePicker
+            value={scheduledDate}
+            mode="datetime"
+            onChange={this.handleDateChange}
+            display="default"
+            minimumDate={new Date()} // Restrict to current date onwards
+            minuteInterval={1} // Set minute intervals for testing
+          />
+        ))}
         <Button title="Edit" onPress={this.handleEditButton} />
         <Button title="Send Draft" onPress={this.handleSendDraft} />
         <Button title="Delete Draft" onPress={this.handleDeleteDraft} />
@@ -130,6 +214,7 @@ class DraftMessageScreen extends Component {
     );
   }
   
+   
 }
 
 const styles = StyleSheet.create({
@@ -147,3 +232,4 @@ const styles = StyleSheet.create({
 });
 
 export default DraftMessageScreen;
+

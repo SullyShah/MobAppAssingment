@@ -181,6 +181,7 @@ class ContactScreen extends Component {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Contacts</Text>
+          
         </View>
 
         <TextInput
@@ -190,14 +191,30 @@ class ContactScreen extends Component {
           style={styles.input}
         />
 
-        <Button
+        {/* <Button
           title="Manage Contacts"
           onPress={() =>
             this.props.navigation.navigate('ManageContacts', {
               onRefreshContacts: this.refreshContactsList,
             })
           }
-        />
+        /> */}
+
+         <Button
+            title="Add Contact"
+            onPress={() =>
+              this.props.navigation.navigate('AddContact', {
+                onRefreshContacts: this.refreshContactsList,
+              })
+            }
+          />
+
+<View style={styles.buttonContainer}>
+          <Button
+            title="Unblock Contact"
+            onPress={() => this.props.navigation.navigate('BlockList')}
+          />
+        </View>
 
         <FlatList
           contentContainerStyle={{ flexGrow: 1 }}
@@ -262,6 +279,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 10,
+    backgroundColor: '#EAF5E2',
+
   },
   header: {
     flexDirection: 'row',
@@ -340,5 +359,3 @@ const styles = StyleSheet.create({
   },
 });
 export default ContactScreen;
-
-

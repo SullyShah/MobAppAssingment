@@ -33,7 +33,7 @@ class UpdateChatScreen extends Component {
   };
 
   navigateToChatPage = () => {
-    this.props.navigation.navigate('Chat');
+    this.props.navigation.navigate('ChatList');
   };
 
   showModal = (title, message) => {
@@ -46,8 +46,8 @@ class UpdateChatScreen extends Component {
 
   hideModal = () => {
     this.setState({ modalVisible: false });
+    this.navigateToChatPage();
   };
-
 
   fetchChatDetails = async () => {
     try {
@@ -66,7 +66,6 @@ class UpdateChatScreen extends Component {
           newChatName: chatDetails.name || '',
           users: chatDetails.members || [],
         });
-
       } else if (response.status === 401) {
         console.log('Unauthorized');
         await AsyncStorage.removeItem('whatsthat_session_token');
@@ -99,7 +98,6 @@ class UpdateChatScreen extends Component {
       if (response.status === 200) {
         console.log('Chat name updated successfully');
         this.showModal('Success', 'Chat name updated successfully');
-        this.navigateToChatPage();
       } else if (response.status === 400) {
         try {
           const responseData = await response.json();
@@ -124,7 +122,7 @@ class UpdateChatScreen extends Component {
       this.setState({ error: error.toString() });
     }
   };
-  
+
   removeUserFromChat = async (user_id) => {
     try {
       const { chat_id } = this.state;
@@ -134,7 +132,7 @@ class UpdateChatScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-  
+
       if (response.status === 200) {
         console.log(`User with ID ${user_id} removed from the chat`);
         this.showModal('Success', `User with ID ${user_id} removed from the chat`);
@@ -156,9 +154,10 @@ class UpdateChatScreen extends Component {
       this.setState({ error: error.toString() });
     }
   };
+
   render() {
-    const { newChatName, users, chat_id, modalVisible, modalTitle, modalMessage } = this.state;
-  
+    const { newChatName, users, modalVisible, modalTitle, modalMessage } = this.state;
+
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Chat Name:</Text>
@@ -168,7 +167,7 @@ class UpdateChatScreen extends Component {
           style={styles.input}
         />
         <Button title="Update" onPress={this.updatenewChatName} />
-  
+
         <Text style={styles.userTitle}>Users in Chat:</Text>
         {users && users.length > 0 ? (
           <FlatList
@@ -184,20 +183,18 @@ class UpdateChatScreen extends Component {
         ) : (
           <Text style={styles.noUsers}>No users in the chat</Text>
         )}
-  
+
         <Button title="Add Users to Chat" onPress={this.navigateToAddToChat} />
         <Button title="Back" onPress={() => this.props.navigation.goBack()} />
-   
-        <Modal
-          animationType="slide"
-          visible={modalVisible}
-          onRequestClose={this.hideModal}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{modalTitle}</Text>
-              <Text style={styles.modalMessage}>{modalMessage}</Text>
-              <Button title="Close" onPress={this.hideModal} />
+
+        <Modal animationType="slide" visible={modalVisible} onRequestClose={this.hideModal} transparent>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{modalTitle}</Text>
+                <Text style={styles.modalMessage}>{modalMessage}</Text>
+                <Button title="Close" onPress={this.hideModal} />
+              </View>
             </View>
           </View>
         </Modal>
@@ -210,7 +207,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#EAF5E2',
   },
   title: {
     fontWeight: 'bold',
@@ -226,6 +223,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 10,
+    fontSize: 20,
+
   },
   userItem: {
     flexDirection: 'row',
@@ -234,15 +233,23 @@ const styles = StyleSheet.create({
   },
   userName: {
     flex: 1,
+    // fontWeight: 'bold',
+    fontSize: 20,
   },
   noUsers: {
     marginTop: 10,
   },
-  modalContainer: {
+  modalBackground: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -262,3 +269,4 @@ const styles = StyleSheet.create({
 });
 
 export default UpdateChatScreen;
+  

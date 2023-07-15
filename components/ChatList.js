@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Text, View, TextInput, Button, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-class ChatScreen extends Component {
+class ChatListScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -65,12 +65,15 @@ class ChatScreen extends Component {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.separatorLine} />
+
         <FlatList
           data={chats}
           renderItem={({ item }) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.chatContainer}
-              onPress={() => this.props.navigation.navigate('SingleChat', { chat_id: item.chat_id })}>
+              onPress={() => this.props.navigation.navigate('SingleChat', { chat_id: item.chat_id })}
+            >
               <Text style={styles.chatName}>{item.name}</Text>
               <Text>Last Message: {item.last_message.message}</Text>
             </TouchableOpacity>
@@ -81,18 +84,17 @@ class ChatScreen extends Component {
     );
   }
 }
-
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 10,
-    backgroundColor: '#E6E6FA',
+    backgroundColor: '#EAF5E2',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#808080', 
+    backgroundColor: '#EAF5E2',
     padding: 10,
     borderRadius: 8,
     marginVertical: 10,
@@ -107,8 +109,8 @@ const styles = {
     textDecorationLine: 'underline',
   },
   chatContainer: {
-    borderColor: '#ccc',
-    borderWidth: 3,
+    borderColor: 'black',
+    borderWidth: 2,
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
@@ -125,6 +127,11 @@ const styles = {
     fontWeight: 'bold',
     marginBottom: 5,
   },
-};
+  separatorLine: {
+    borderBottomColor: 'black',
+    borderBottomWidth: 2,
+    marginBottom: 10,
+  },
+});
 
-export default ChatScreen;
+export default ChatListScreen;
