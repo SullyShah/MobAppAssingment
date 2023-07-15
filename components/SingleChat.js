@@ -42,22 +42,18 @@ class SingleChatScreen extends Component {
       }
     });
   
-    AsyncStorage.getItem('whatsthat_draft_message').then(draftMessage => {
+    const draftMessageKey = `whatsthat_draft_message_${chat_id}`; // Generate the draft message key based on chat_id
+    AsyncStorage.getItem(draftMessageKey).then(draftMessage => {
       if (draftMessage) {
-        this.setState({ draftMessage, isDraft: true }); // Set isDraft to true
+        this.setState({ draftMessage, isDraft: true });
       } else {
-        this.setState({ isDraft: false }); // Set isDraft to false if no draft message
+        this.setState({ draftMessage: '', isDraft: false });
       }
     });
-
-    this.loadDraftMessage(); // Call loadDraftMessage function
+  
     this.startPolling();
   }
   
-
-  componentWillUnmount() {
-    this.stopPolling();
-  }
 
   startPolling = () => {
     this.timer = setInterval(() => {
@@ -84,24 +80,34 @@ class SingleChatScreen extends Component {
       newMessage: text,
       isTyping: text.length > 0,
     });
-    AsyncStorage.setItem('whatsthat_draft_message', text);
+    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, text);
   };
 
   saveDraftMessage = async () => {
     if (this.state.newMessage.length > 0) {
-      await AsyncStorage.setItem('whatsthat_draft_message', this.state.newMessage);
-      this.setState({ isTyping: false, isDraft: true, newMessage: '' });
+      const { currentchat_id, newMessage } = this.state;
+      try {
+        await AsyncStorage.setItem(`whatsthat_draft_message_${currentchat_id}`, newMessage);
+        this.setState({ isTyping: false, isDraft: true, newMessage: '' }); // Clear the newMessage
+      } catch (error) {
+        console.log('Error saving draft message:', error);
+      }
     }
   };
   
+  
   loadDraftMessage = async () => {
-    AsyncStorage.getItem('whatsthat_draft_message').then(draftMessage => {
+    const { currentchat_id } = this.state;
+    try {
+      const draftMessage = await AsyncStorage.getItem(`whatsthat_draft_message_${currentchat_id}`);
       if (draftMessage) {
         this.setState({ newMessage: draftMessage, isDraft: true });
       } else {
         this.setState({ newMessage: '', isDraft: false });
       }
-    });
+    } catch (error) {
+      console.log('Error loading draft message:', error);
+    }
   };
   
   sendMessage = async () => {
@@ -111,6 +117,7 @@ class SingleChatScreen extends Component {
       try {
         await this.SendMessage(this.state.currentchat_id, messageToSend);
         await AsyncStorage.setItem('whatsthat_user_id', this.state.currentUser.toString()); // Set the current user ID again
+        await AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`); // Remove draft for the current chat
         this.setState({ newMessage: '', isTyping: false, isDraft: false });
       } catch (error) {
         Alert.alert('Error', error.toString());
@@ -124,23 +131,26 @@ class SingleChatScreen extends Component {
     navigation.navigate('DraftMessage', {
       draftMessage: newMessage,
       chat_id: currentchat_id,
+      handleEditDraft: this.handleEditDraft, // Pass the handleEditDraft function to DraftMessageScreen
+      handleDeleteDraft: this.handleDeleteDraft, // Pass the handleDeleteDraft function to DraftMessageScreen
+      handleSendDraft: this.handleSendDraft, // Pass the handleSendDraft function to DraftMessageScreen
     });
   };
   
   handleEditDraft = (updatedDraftMessage) => {
     this.setState({ newMessage: updatedDraftMessage });
-    AsyncStorage.setItem('whatsthat_draft_message', updatedDraftMessage);
+    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, updatedDraftMessage);
   };
 
   handleDeleteDraft = () => {
     this.setState({ newMessage: '', isDraft: false });
+    AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`);
   };
 
   handleSendDraft = (draftMessage) => {
     this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
   };
 
-  
   async viewSingleChat(chat_id) {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
@@ -188,9 +198,8 @@ class SingleChatScreen extends Component {
       });
       if (response.status === 200) {
         const chatDetails = await response.json();
-        await AsyncStorage.removeItem('whatsthat_draft_message');
         this.setState({
-          chatDetails: chatDetails,
+          chatDetails: Details,
           messages: chatDetails.messages || [],
         });
       } else if (response.status === 400) {
@@ -234,133 +243,133 @@ class SingleChatScreen extends Component {
       } else if (response.status === 403) {
         console.log('Forbidden');
       } else if (response.status === 404) {
-        console.log('Not Found')      } else {
-          throw 'Server Error';
-        }
-      } catch (error) {
-        console.log('Error fetching new messages:', error);
+        console.log('Not Found');
+      } else {
+        throw 'Server Error';
       }
-    };
-
-    render() {
-      const { singleChat, messages, currentUser, newMessage, isTyping, isDraft } = this.state;
-    
-      if (!singleChat) {
-        return <Text>Loading...</Text>;
-      }
-    
-      return (
-        <View style={styles.container}>
-          <FlatList
-            inverted
-            data={messages}
-            keyExtractor={(item) => item.message_id.toString()}
-            renderItem={({ item: msg }) => (
-              <TouchableOpacity
-                onLongPress={() => this.handleMessageLongPress(msg)}
-              >
-                <View
-                  style={[
-                    styles.messageBox,
-                    msg.author.user_id === currentUser ? styles.rightAlign : styles.leftAlign,
-                  ]}
-                >
-                  <Text style={styles.messageSender}>{msg.author.first_name}</Text>
-                  <Text style={styles.messageText}>{msg.message}</Text>
-                  <Text style={styles.messageTime}>
-                    {moment(msg.timestamp).format('MMMM Do YYYY, h:mm a')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Type your message here..."
-              value={newMessage}
-              onChangeText={this.handleMessageInputChange}
-            />
-            {isTyping && !isDraft && (
-              <TouchableOpacity onPress={this.saveDraftMessage}>
-                <Text style={styles.buttonText}>Save Draft</Text>
-              </TouchableOpacity>
-            )}
-
-{isDraft && newMessage === '' && (
-  <TouchableOpacity onPress={this.navigateToDraftScreen}>
-    <Text style={styles.buttonText}>Load Draft</Text>
-  </TouchableOpacity>
-)}
-
-
-
-            <Button title="Send" onPress={this.sendMessage} />
-          </View>
-        </View>
-      );
+    } catch (error) {
+      console.log('Error fetching new messages:', error);
     }
+  };
+
+  render() {
+    const { singleChat, messages, currentUser, newMessage, isTyping, isDraft } = this.state;
+  
+    if (!singleChat) {
+      return <Text>Loading...</Text>;
+    }
+  
+    return (
+      <View style={styles.container}>
+        <FlatList
+          inverted
+          data={messages}
+          keyExtractor={(item) => item.message_id.toString()}
+          renderItem={({ item: msg }) => (
+            <TouchableOpacity
+              onLongPress={() => this.handleMessageLongPress(msg)}
+            >
+              <View
+                style={[
+                  styles.messageBox,
+                  msg.author.user_id === currentUser ? styles.rightAlign : styles.leftAlign,
+                ]}
+              >
+                <Text style={styles.messageSender}>{msg.author.first_name}</Text>
+                <Text style={styles.messageText}>{msg.message}</Text>
+                <Text style={styles.messageTime}>
+                  {moment(msg.timestamp).format('MMMM Do YYYY, h:mm a')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message here..."
+            value={newMessage}
+            onChangeText={this.handleMessageInputChange}
+          />
+          {isTyping && !isDraft && (
+            <TouchableOpacity onPress={this.saveDraftMessage}>
+              <Text style={styles.buttonText}>Save Draft</Text>
+            </TouchableOpacity>
+          )}
+  
+          {isDraft && newMessage === '' && (
+            <TouchableOpacity onPress={this.navigateToDraftScreen}>
+              <Text style={styles.buttonText}>Load Draft</Text>
+            </TouchableOpacity>
+          )}
+  
+          <Button title="Send" onPress={this.sendMessage} />
+        </View>
+      </View>
+    );
+  }
   }
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    messagesContainer: {
-      flex: 1,
-      padding: 10,
-    },
-    messageBox: {
-      marginVertical: 10,
-      marginHorizontal: 10, 
-      padding: 10,
-      borderRadius: 5,
-      borderColor: '#ccc',
-      borderWidth: 1,
-    },
-    rightAlign: {
-      alignSelf: 'flex-end',
-      backgroundColor: '#dcf8c6',
-    },
-    leftAlign: {
-      alignSelf: 'flex-start',
-      backgroundColor: '#fff',
-    },
-    messageSender: {
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    messageText: {
-      fontSize: 16,
-    },
-    messageTime: {
-      fontSize: 12,
-      color: 'gray',
-      textAlign: 'right',
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 10,
-      borderTopColor: '#ccc',
-      borderTopWidth: 1,
-    },
-    input: {
-      flex: 1,
-      marginRight: 10,
-      height: 40,
-      borderColor: '#ccc',
-      borderWidth: 1,
-      borderRadius: 5,
-      padding: 5,
-    },
-    buttonText: {
-      color: 'blue',
-      fontWeight: 'bold',
-      textDecorationLine: 'underline',
-      fontSize: 15,
-    },
-  });
-  
-  export default SingleChatScreen;
-  
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  messagesContainer: {
+    flex: 1,
+    padding: 10,
+  },
+  messageBox: {
+    marginVertical: 10,
+    marginHorizontal: 10,
+    padding: 10,
+    borderRadius: 5,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  rightAlign: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#dcf8c6',
+  },
+  leftAlign: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#fff',
+  },
+  messageSender: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  messageText: {
+    fontSize: 16,
+  },
+  messageTime: {
+    fontSize: 12,
+    color: 'gray',
+    textAlign: 'right',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopColor: '#ccc',
+    borderTopWidth: 1,
+  },
+  input: {
+    flex: 1,
+    marginRight: 10,
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 5,
+  },
+  buttonText: {
+    color: 'blue',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    fontSize: 15,
+  },
+});
+
+export default SingleChatScreen;
+
+

@@ -7,16 +7,20 @@ class DraftMessageScreen extends Component {
     super(props);
     this.state = {
       draftMessage: '',
+      chat_id: '',
     };
   }
   
   componentDidMount() {
-    this.loadDraftMessage();
+    const { route } = this.props;
+    const { chat_id } = route.params;
+    this.setState({ chat_id });
+    this.loadDraftMessage(chat_id);
   }
 
-  loadDraftMessage = async () => {
+  loadDraftMessage = async (chat_id) => {
     try {
-      const draftMessage = await AsyncStorage.getItem('whatsthat_draft_message');
+      const draftMessage = await AsyncStorage.getItem(`whatsthat_draft_message_${chat_id}`);
       if (draftMessage) {
         this.setState({ draftMessage });
       }
@@ -26,8 +30,9 @@ class DraftMessageScreen extends Component {
   };
 
   handleDeleteDraft = async () => {
+    const { chat_id } = this.state;
     try {
-      await AsyncStorage.removeItem('whatsthat_draft_message');
+      await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
       this.setState({ draftMessage: '' });
       this.props.navigation.goBack();
     } catch (error) {
@@ -36,19 +41,18 @@ class DraftMessageScreen extends Component {
   };
 
   handleSendDraft = async () => {
-    const { navigation, route } = this.props;
-    const { draftMessage } = this.state;
-    const chat_id = route.params.chat_id; // Make sure you pass chat_id when navigating to this screen
+    const { navigation } = this.props;
+    const { draftMessage, chat_id } = this.state;
     try {
       await this.SendMessage(chat_id, draftMessage);
-      await AsyncStorage.removeItem('whatsthat_draft_message');
+      await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
       navigation.goBack();
     } catch (error) {
       console.log('Error sending draft message:', error);
     }
   };
 
-  async SendMessage(chat_id, message) {
+  SendMessage = async (chat_id, message) => {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
         method: 'POST',
@@ -62,7 +66,7 @@ class DraftMessageScreen extends Component {
       });
       if (response.status === 200) {
         const chatDetails = await response.json();
-        await AsyncStorage.removeItem('whatsthat_draft_message');
+        await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
         this.setState({
           chatDetails: chatDetails,
           messages: chatDetails.messages || [], // Update messages
@@ -84,12 +88,12 @@ class DraftMessageScreen extends Component {
     } catch (error) {
       this.setState({ error: error });
     }
-  }
+  };
 
   handleEditButton = async () => {
+    const { draftMessage, chat_id } = this.state;
     try {
-      const { draftMessage } = this.state;
-      await AsyncStorage.setItem('whatsthat_draft_message', draftMessage);
+      await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
       this.props.navigation.goBack();
     } catch (error) {
       console.log('Error saving edited draft message:', error);
@@ -105,18 +109,9 @@ class DraftMessageScreen extends Component {
     this.setState({ draftMessage: text });
   };
 
-  sendDraftMessage = async () => {
-    const { route } = this.props;
-    const { chat_id, draftMessage } = route.params;
-    
-    // Use your function that sends the message. Here is a sample usage.
-    await this.props.sendMessage(chat_id, draftMessage);
-  };
-  
-
   render() {
-    const { draftMessage } = this.state;
-
+    const { draftMessage, isDraft } = this.state;
+  
     return (
       <View style={styles.container}>
         <TextInput
@@ -124,13 +119,17 @@ class DraftMessageScreen extends Component {
           value={draftMessage}
           onChangeText={this.handleEditMessage}
         />
+        {isDraft && (
+          <Button title="Load Draft" onPress={this.handleLoadDraft} />
+        )}
         <Button title="Edit" onPress={this.handleEditButton} />
         <Button title="Send Draft" onPress={this.handleSendDraft} />
         <Button title="Delete Draft" onPress={this.handleDeleteDraft} />
         <Button title="Cancel" onPress={this.handleCancel} />
       </View>
-    ); 
+    );
   }
+  
 }
 
 const styles = StyleSheet.create({
