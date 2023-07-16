@@ -29,17 +29,23 @@ class SingleChatScreen extends Component {
     }
     this.viewSingleChat(chat_id);
     this.setState({ currentchat_id: chat_id });
+
     navigation.setOptions({
       title: chat_id,
       headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('UpdateChat', { chat_id })}>
-          <Text style={{ color: 'blue', marginRight: 10, fontWeight: 'bold', textDecorationLine: 'underline', fontSize: 15 }}>
-            Edit Chat
-          </Text>
-        </TouchableOpacity>
-      ) 
-
-
+        <View style={{ flexDirection: 'row' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('UpdateChat', { chat_id })}>
+            <Text style={{ color: 'blue', marginRight: 10, fontWeight: 'bold', textDecorationLine: 'underline', fontSize: 15 }}>
+              Edit Chat
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={this.navigateToDraftListScreen}>
+            <Text style={{ color: 'blue', marginRight: 10, fontWeight: 'bold', textDecorationLine: 'underline', fontSize: 15 }}>
+              Load Draft
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ),
     });
   
     AsyncStorage.getItem('whatsthat_user_id').then(userId => {
@@ -89,19 +95,36 @@ class SingleChatScreen extends Component {
       newMessage: text,
       isTyping: text.length > 0,
     });
-    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, text);
+  };
+
+  handleEditDraft = (updatedDraftMessage) => {
+    this.setState({ newMessage: updatedDraftMessage });
+    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, updatedDraftMessage);
+  };
+
+  handleDeleteDraft = () => {
+    this.setState({ newMessage: '', isDraft: false });
+    AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`);
+  };
+
+  handleSendDraft = (draftMessage) => {
+    this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
   };
 
   saveDraftMessage = async () => {
     if (this.state.newMessage.length > 0) {
-      const { currentchat_id, newMessage } = this.state;
+      const timestamp = Date.now(); // Add a timestamp to make each draft unique
+      const draftMessageKey = `whatsthat_draft_message_${this.state.currentchat_id}_${timestamp}`; 
       try {
-        await AsyncStorage.setItem(`whatsthat_draft_message_${currentchat_id}`, newMessage);
-        this.setState({ isTyping: false, isDraft: true, newMessage: '' }); // Clear the newMessage
+        await AsyncStorage.setItem(draftMessageKey, this.state.newMessage);
+        this.setState({ isTyping: false, isDraft: true, newMessage: '' }); 
       } catch (error) {
         console.log('Error saving draft message:', error);
       }
     }
+  };
+  navigateToDraftListScreen = () => {
+    this.props.navigation.navigate('DraftListScreen');
   };
   
   
@@ -146,19 +169,6 @@ class SingleChatScreen extends Component {
     });
   };
   
-  handleEditDraft = (updatedDraftMessage) => {
-    this.setState({ newMessage: updatedDraftMessage });
-    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, updatedDraftMessage);
-  };
-
-  handleDeleteDraft = () => {
-    this.setState({ newMessage: '', isDraft: false });
-    AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`);
-  };
-
-  handleSendDraft = (draftMessage) => {
-    this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
-  };
 
   async viewSingleChat(chat_id) {
     try {
@@ -301,17 +311,18 @@ class SingleChatScreen extends Component {
             value={newMessage}
             onChangeText={this.handleMessageInputChange}
           />
-          {isTyping && !isDraft && (
-            <TouchableOpacity onPress={this.saveDraftMessage}>
-              <Text style={styles.buttonText}>Save Draft</Text>
-            </TouchableOpacity>
-          )}
+
+        {isTyping && (
+          <TouchableOpacity onPress={this.saveDraftMessage}>
+            <Text style={styles.buttonText}>Save Draft</Text>
+          </TouchableOpacity>
+        )}
   
-          {isDraft && newMessage === '' && (
-            <TouchableOpacity onPress={this.navigateToDraftScreen}>
+          {/* {isDraft && newMessage === '' && (
+            <TouchableOpacity onPress={this.navigateToDraftListScreen}>
               <Text style={styles.buttonText}>Load Draft</Text>
             </TouchableOpacity>
-          )}
+          )} */}
   
           <Button title="Send" onPress={this.sendMessage} />
         </View>

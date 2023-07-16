@@ -1,5 +1,9 @@
+
+
+
+
 import React, { Component } from 'react';
-import { View, TextInput, Button, StyleSheet, Platform } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DatePicker from 'react-datepicker';
@@ -19,7 +23,8 @@ class DraftMessageScreen extends Component {
 
   componentDidMount() {
     const { route } = this.props;
-    const { chat_id } = route.params;
+    const { draftMessageKey } = route.params;
+    const chat_id = draftMessageKey.replace('whatsthat_draft_message_', ''); // Extract chat_id from draftMessageKey
     this.setState({ chat_id });
     this.loadDraftMessage(chat_id);
   }
@@ -41,6 +46,8 @@ class DraftMessageScreen extends Component {
 
   handleDeleteDraft = async () => {
     const { chat_id } = this.state;
+    const { route } = this.props;
+    const { draftMessageKey } = route.params;
     try {
       await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
       this.setState({ draftMessage: '' });
@@ -108,7 +115,6 @@ class DraftMessageScreen extends Component {
       this.setState({ error: error });
     }
   };
-  
 
   handleEditButton = async () => {
     const { draftMessage, chat_id, scheduledDate } = this.state;
@@ -129,6 +135,16 @@ class DraftMessageScreen extends Component {
 
   handleEditMessage = (text) => {
     this.setState({ draftMessage: text });
+  };
+
+  handleSendRightNow = async () => {
+    const { chat_id, draftMessage } = this.state;
+  
+    try {
+      await this.sendMessageWithDraft(chat_id, draftMessage);
+    } catch (error) {
+      console.log('Error sending draft message:', error);
+    }
   };
 
   scheduleMessage = async () => {
@@ -152,9 +168,7 @@ class DraftMessageScreen extends Component {
       console.log('Error scheduling message:', error);
     }
   };
-  
-  
-  
+
   handleDateChange = (selectedDate) => {
     const currentDate = moment();
     const selected = moment(selectedDate);
@@ -171,7 +185,7 @@ class DraftMessageScreen extends Component {
       console.log('Cannot select a past date');
     }
   };
-  
+
   showDatePicker = () => {
     this.setState({ showDatePicker: true });
   };
@@ -186,8 +200,12 @@ class DraftMessageScreen extends Component {
           style={styles.input}
           value={draftMessage}
           onChangeText={this.handleEditMessage}
+          placeholder="Enter your draft message"
+          multiline
         />
-        <Button title="Select Date" onPress={this.showDatePicker} />
+        <TouchableOpacity style={styles.button} onPress={this.showDatePicker}>
+          <Text style={styles.buttonText}>{formattedDate}</Text>
+        </TouchableOpacity>
         {showDatePicker && (Platform.OS === 'web' ? (
           <DatePicker
             selected={scheduledDate}
@@ -206,30 +224,58 @@ class DraftMessageScreen extends Component {
             minuteInterval={1} // Set minute intervals for testing
           />
         ))}
-        <Button title="Edit" onPress={this.handleEditButton} />
-        <Button title="Send Draft" onPress={this.handleSendDraft} />
-        <Button title="Delete Draft" onPress={this.handleDeleteDraft} />
-        <Button title="Cancel" onPress={this.handleCancel} />
+        <TouchableOpacity style={styles.button} onPress={this.handleEditButton}>
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={this.handleSendDraft}>
+          <Text style={styles.buttonText}>Send Draft</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={this.handleSendRightNow}>
+          <Text style={styles.buttonText}>Send Right Now</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={this.handleDeleteDraft}>
+          <Text style={styles.buttonText}>Delete Draft</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={this.handleCancel}>
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     );
   }
+  }
   
-   
-}
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    input: {
+      borderColor: '#ccc',
+      borderWidth: 1,
+      borderRadius: 5,
+      padding: 5,
+      marginBottom: 10,
+      width: '100%',
+      height: 100,
+    },
+    button: {
+      backgroundColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      marginTop: 10,
+      width: '100%',
+      alignItems: 'center',
+    },
+    buttonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
+  });
+  
+  export default DraftMessageScreen;
+  
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 5,
-    marginBottom: 10,
-  },
-});
-
-export default DraftMessageScreen;
 
