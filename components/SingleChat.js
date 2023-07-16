@@ -66,7 +66,6 @@ class SingleChatScreen extends Component {
   
     this.startPolling();
   }
-  
 
   startPolling = () => {
     this.timer = setInterval(() => {
@@ -74,7 +73,7 @@ class SingleChatScreen extends Component {
       if(currentchat_id) {
           this.fetchNewMessages(currentchat_id);
       }
-    }, 100); 
+    }, 1000); 
   };
 
   stopPolling = () => {
@@ -124,7 +123,10 @@ class SingleChatScreen extends Component {
     }
   };
   navigateToDraftListScreen = () => {
-    this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.chat_id });
+    // this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.chat_id });
+      this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.currentchat_id });
+    
+    
   };
   
   
@@ -239,7 +241,6 @@ class SingleChatScreen extends Component {
       this.setState({ error: error });
     }
   }
-
   fetchNewMessages = async (chat_id = null) => {
     if(!chat_id) return; 
     try {
@@ -264,6 +265,7 @@ class SingleChatScreen extends Component {
         console.log('Forbidden');
       } else if (response.status === 404) {
         console.log('Not Found');
+        this.stopPolling();  // stop the polling if the chat is not found
       } else {
         throw 'Server Error';
       }
@@ -271,6 +273,8 @@ class SingleChatScreen extends Component {
       console.log('Error fetching new messages:', error);
     }
   };
+
+  
 
   render() {
     const { singleChat, messages, currentUser, newMessage, isTyping, isDraft } = this.state;
@@ -392,4 +396,3 @@ const styles = StyleSheet.create({
 });
 
 export default SingleChatScreen;
-
