@@ -174,14 +174,11 @@ class ContactScreen extends Component {
     }
   };
 
-  
-
   render() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Contacts</Text>
-          
         </View>
 
         <TextInput
@@ -191,17 +188,9 @@ class ContactScreen extends Component {
           style={styles.input}
         />
 
-        {/* <Button
-          title="Manage Contacts"
-          onPress={() =>
-            this.props.navigation.navigate('ManageContacts', {
-              onRefreshContacts: this.refreshContactsList,
-            })
-          }
-        /> */}
-
-         <Button
-            title="Add Contact"
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Add Contacts"
             onPress={() =>
               this.props.navigation.navigate('AddContact', {
                 onRefreshContacts: this.refreshContactsList,
@@ -209,9 +198,8 @@ class ContactScreen extends Component {
             }
           />
 
-<View style={styles.buttonContainer}>
           <Button
-            title="Unblock Contact"
+            title="Unblock Contacts"
             onPress={() => this.props.navigation.navigate('BlockList')}
           />
         </View>
@@ -280,19 +268,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     backgroundColor: '#EAF5E2',
-
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'center', // Center horizontally
-    alignItems: 'center', // Center vertically
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
   },
   headerText: {
     fontSize: 30,
     fontWeight: 'bold',
-    fontFamily: 'Oswald', // Example font family
-
+    fontFamily: 'Oswald',
   },
   input: {
     padding: 10,
@@ -313,15 +299,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonContainer: {
-    flexDirection: 'row',
-    margin: 10,
+    flexDirection: 'row', // Added this line
+    justifyContent: 'space-between', // Added this line to create space between buttons
+    marginVertical: 10,
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-
-  },modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -335,13 +317,13 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   profilePicture: {
-    width: 150, 
-    height: 150, 
-    borderRadius: 75, 
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 10,
   },
   userInfo: {
-    alignItems: 'center', 
+    alignItems: 'center',
   },
   userName: {
     fontSize: 20,
@@ -358,4 +340,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
 export default ContactScreen;

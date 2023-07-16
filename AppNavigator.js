@@ -11,9 +11,8 @@ import ContactScreen from './components/ContactList';
 import DeleteContactScreen from './components/DeleteContact';
 import AddToChatScreen from './components/AddToChat';
 import NewChatScreen from './components/NewChat';
-import ProfileScreen from './components/UserProfile';
+import UserProfileScreen from './components/UserProfile';
 import EditProfileScreen from './components/EditProfile';
-import ManageContactScreen from './components/ManageContacts';
 import CameraScreen1 from './components/Camera';
 import SendMessageScreen from './components/SendMessage';
 import SingleChatScreen from './components/SingleChat';
@@ -31,7 +30,6 @@ function ContactStack() {
       <Stack.Screen name="ContactList" component={ContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddContact" component={AddContactsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DeleteContact" component={DeleteContactScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ManageContacts" component={ManageContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="BlockList" component={BlockedScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
@@ -56,7 +54,7 @@ function ChatStack() {
 function ProfileStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="UserProfile" component={UserProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Camera" component={CameraScreen1} options={{ headerShown: false }} />
     </Stack.Navigator>

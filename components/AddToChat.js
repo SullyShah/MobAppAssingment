@@ -38,7 +38,7 @@ class AddToChatScreen extends Component {
   handleModalDone = () => {
     this.setState({ modalVisible: false, isModalDoneVisible: false });
     const { chat_id } = this.state.chatDetails;
-    this.props.navigation.navigate('SingleChat'); 
+    this.props.navigation.navigate('SingleChat', { chat_id: this.state.chat_id });
   };
   
   fetchContacts = async () => {

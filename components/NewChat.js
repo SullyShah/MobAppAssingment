@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { TextInput, Button, Alert, View, Modal, Text, StyleSheet } from 'react-native';
+import { TextInput, Button, View, Modal, Text, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class NewChatScreen extends Component {
@@ -10,6 +10,7 @@ class NewChatScreen extends Component {
       modalVisible: false,
       modalTitle: '',
       modalMessage: '',
+      chat_id: null, 
     };
   }
 
@@ -42,10 +43,10 @@ class NewChatScreen extends Component {
       if (response.status === 201) {
         const chatDetails = await response.json();
         console.log("Chat Details: ", chatDetails);
-        this.props.navigation.navigate('Chats', {
-          chat_id: chatDetails.id,
-          chatDetails: chatDetails
-        });
+        this.setState({ chat_id: chatDetails.chat_id }, () => { // Update this line
+          console.log("Chat ID is set in state: ", this.state.chat_id);
+          this.navigateToEditChat();
+        }); // Store chat_id in state and navigate to update chat page
         this.showModal('Success', 'Chat created');
         return chatDetails;
       } else if (response.status === 400) {
@@ -60,6 +61,19 @@ class NewChatScreen extends Component {
       this.showModal('Error', error.toString());
     }
   }
+
+
+  navigateToEditChat = () => {
+    const chat_id = this.state.chat_id; // Extract the chat_id from the state
+    console.log("Navigating to Edit Chat with ID: ", chat_id);
+    if (chat_id) {
+      this.setState({ modalVisible: false }); // Close the modal
+      this.props.navigation.navigate('UpdateChat', { chat_id: chat_id });
+    } else {
+      console.log('Invalid chat id');
+    }
+  };
+  
 
   createNewChat = async () => {
     try {
@@ -87,6 +101,7 @@ class NewChatScreen extends Component {
 
         <Modal
           animationType="slide"
+          transparent={true}
           visible={modalVisible}
           onRequestClose={this.hideModal}
         >
@@ -95,8 +110,6 @@ class NewChatScreen extends Component {
               <Text style={styles.modalTitle}>{modalTitle}</Text>
               <Text style={styles.modalMessage}>{modalMessage}</Text>
               <Button title="Close" onPress={this.hideModal} />
-              <Button title="Back" onPress={() => this.props.navigation.goBack()} />
-
             </View>
           </View>
         </Modal>
@@ -110,7 +123,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#EAF5E2',
   },
   title: {
     fontSize: 28,
@@ -138,6 +151,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
+    width: '80%',
   },
   modalTitle: {
     fontSize: 24,
@@ -151,4 +165,3 @@ const styles = StyleSheet.create({
 });
 
 export default NewChatScreen;
-//MODAL IS NOT WORKING !!!!!!!!!!!!!!!!!!!!!!

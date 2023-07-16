@@ -21,7 +21,12 @@ class SingleChatScreen extends Component {
 
   componentDidMount() {
     const { route, navigation } = this.props;
-    const { chat_id } = route.params;
+    console.log(route.params); // add this line to check the parameters
+    const { chat_id } = route?.params || {}; // Here's the modification
+    if (!chat_id) {
+      console.error('No chat_id provided');
+      return; // exit the function if chat_id is not available
+    }
     this.viewSingleChat(chat_id);
     this.setState({ currentchat_id: chat_id });
     navigation.setOptions({
@@ -33,6 +38,8 @@ class SingleChatScreen extends Component {
           </Text>
         </TouchableOpacity>
       ) 
+
+
     });
   
     AsyncStorage.getItem('whatsthat_user_id').then(userId => {
@@ -58,7 +65,9 @@ class SingleChatScreen extends Component {
   startPolling = () => {
     this.timer = setInterval(() => {
       const { currentchat_id } = this.state;
-      this.fetchNewMessages(currentchat_id);
+      if(currentchat_id) {
+          this.fetchNewMessages(currentchat_id);
+      }
     }, 100); 
   };
 
@@ -221,7 +230,8 @@ class SingleChatScreen extends Component {
     }
   }
 
-  fetchNewMessages = async (chat_id) => {
+  fetchNewMessages = async (chat_id = null) => {
+    if(!chat_id) return; 
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
         method: 'GET',

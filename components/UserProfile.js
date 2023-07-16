@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Text, View, Image, Button, StyleSheet, data, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-class ProfileScreen extends Component {
+class UserProfileScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -179,4 +179,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default UserProfileScreen;

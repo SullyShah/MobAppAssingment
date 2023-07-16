@@ -24,6 +24,7 @@ class UpdateChatScreen extends Component {
   }
 
   componentDidMount() {
+    const { chat_id } = this.state;
     this.fetchChatDetails();
   }
 
