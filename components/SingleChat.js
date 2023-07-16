@@ -124,7 +124,7 @@ class SingleChatScreen extends Component {
     }
   };
   navigateToDraftListScreen = () => {
-    this.props.navigation.navigate('DraftListScreen');
+    this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.chat_id });
   };
   
   
@@ -392,3 +392,4 @@ const styles = StyleSheet.create({
 });
 
 export default SingleChatScreen;
+

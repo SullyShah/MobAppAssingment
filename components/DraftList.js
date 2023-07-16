@@ -12,12 +12,14 @@ class DraftListScreen extends Component {
   }
 
   loadDrafts = async () => {
-    // Use AsyncStorage.getAllKeys and AsyncStorage.multiGet to fetch all drafts
+    const { chat_id } = this.props; // access chat_id from props
     const keys = await AsyncStorage.getAllKeys();
-    const draftKeys = keys.filter((key) => key.startsWith('whatsthat_draft_message_'));
-    const drafts = await AsyncStorage.multiGet(draftKeys);
+    const draftKeys = keys.filter(key => key.startsWith(`whatsthat_draft_message_${chat_id}`));
+    const draftValues = await AsyncStorage.multiGet(draftKeys);
+    const drafts = draftValues.map(([key, value]) => ({key, value}));
+  
     this.setState({ drafts });
-  };
+  }
 
   handleSelectDraft = (draftMessageKey) => {
     this.props.navigation.navigate('DraftMessage', { draftMessageKey });
