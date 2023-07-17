@@ -40,7 +40,7 @@ class AddToChatScreen extends Component {
     const { chat_id } = this.state.chatDetails;
     this.props.navigation.navigate('SingleChat', { chat_id: this.state.chat_id });
   };
-  
+
   fetchContacts = async () => {
     try {
       const response = await this.getContacts();

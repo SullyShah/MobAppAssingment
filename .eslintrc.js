@@ -1,19 +1,32 @@
 module.exports = {
-  parser: 'babel-eslint',
+  env: {
+    browser: true,
+    es2021: true,
+  },
   extends: 'airbnb',
-  ecmaFeatures: {
-    classes: true,
+  overrides: [
+    {
+      files: ['*.js'],
+      rules: {
+        camelcase: ['error', {
+          properties: 'never',
+          allow: ['user_id'],
+        }],
+      },
+    },
+    {
+      files: ['*.js'],
+      rules: {
+        'react/jsx-one-expression-per-line': ['off'],
+      },
+    },
+  ],
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
   },
   rules: {
     'react/jsx-filename-extension': ['error', { extensions: ['.js'] }],
     'linebreak-style': ['error', 'windows'],
   },
-  overrides: [
-    {
-      files: ['MobAppAssingment/**/*.js', 'MobAppAssingment/Components/**/*.js'],
-      rules: {
-        'global-require': 'off',
-      },
-    },
-  ],
 };
