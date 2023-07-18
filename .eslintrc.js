@@ -10,7 +10,7 @@ module.exports = {
       rules: {
         camelcase: ['error', {
           properties: 'never',
-          allow: ['user_id'],
+          allow: ['user_id', 'chat_id', 'message_id', 'first_name', 'last_name', 'session_token'], // Add 'chat_id' to the 'allow' array
         }],
       },
     },
@@ -26,6 +26,7 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    camelcase: 'off',
     'react/jsx-filename-extension': ['error', { extensions: ['.js'] }],
     'linebreak-style': ['error', 'windows'],
   },

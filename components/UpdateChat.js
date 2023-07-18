@@ -1,208 +1,15 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, Button, FlatList, StyleSheet, Modal } from 'react-native';
+import {
+  Text,
+  View,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  Modal,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-class UpdateChatScreen extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      chats: [],
-      messages: [],
-      error: null,
-      submitted: false,
-      newChatUserId: '',
-      newMessage: '',
-      chat_id: this.props.route.params.chat_id,
-      chatDetails: this.props.route.params.chatDetails,
-      newChatName: '',
-      users: [],
-      chat_name: '',
-      modalVisible: false,
-      modalTitle: '',
-      modalMessage: '',
-    };
-  }
-
-  componentDidMount() {
-    const { chat_id } = this.state;
-    this.fetchChatDetails();
-  }
-
-  navigateToAddToChat = () => {
-    const { chat_id, chatDetails } = this.state;
-    this.props.navigation.navigate('AddToChat', { chat_id, chatDetails });
-  };
-
-  navigateToChatPage = () => {
-    this.props.navigation.navigate('ChatList');
-  };
-
-  showModal = (title, message) => {
-    this.setState({
-      modalVisible: true,
-      modalTitle: title,
-      modalMessage: message,
-    });
-  };
-
-  hideModal = () => {
-    this.setState({ modalVisible: false });
-    this.navigateToChatPage();
-  };
-
-  fetchChatDetails = async () => {
-    try {
-      const chat_id = this.state.chat_id;
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
-        method: 'GET',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-      });
-      if (response.status === 200) {
-        const chatDetails = await response.json();
-        console.log('chatDetails:', chatDetails);
-        this.setState({
-          chatDetails,
-          newChatName: chatDetails.name || '',
-          users: chatDetails.members || [],
-        });
-      } else if (response.status === 401) {
-        console.log('Unauthorized');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw new Error('Server Error');
-      }
-    } catch (error) {
-      console.error(error);
-      this.setState({ error: error.toString() });
-    }
-  };
-
-  updatenewChatName = async () => {
-    try {
-      const { chat_id, newChatName } = this.state;
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-        body: JSON.stringify({ name: newChatName }),
-      });
-      if (response.status === 200) {
-        console.log('Chat name updated successfully');
-        this.showModal('Success', 'Chat name updated successfully');
-      } else if (response.status === 400) {
-        try {
-          const responseData = await response.json();
-          console.log('Bad Request:', responseData.message);
-        } catch (error) {
-          console.log('Bad Request: Invalid JSON');
-        }
-      } else if (response.status === 401) {
-        console.log('Unauthorized');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw new Error('Server Error');
-      }
-    } catch (error) {
-      console.error(error);
-      this.setState({ error: error.toString() });
-    }
-  };
-
-  removeUserFromChat = async (user_id) => {
-    try {
-      const { chat_id } = this.state;
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-      });
-
-      if (response.status === 200) {
-        console.log(`User with ID ${user_id} removed from the chat`);
-        this.showModal('Success', `User with ID ${user_id} removed from the chat`);
-        this.fetchChatDetails();
-      } else if (response.status === 401) {
-        console.log('Unauthorized');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw new Error('Server Error');
-      }
-    } catch (error) {
-      console.error(error);
-      this.setState({ error: error.toString() });
-    }
-  };
-
-  render() {
-    const { newChatName, users, modalVisible, modalTitle, modalMessage } = this.state;
-
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Chat Name:</Text>
-        <TextInput
-          value={newChatName}
-          onChangeText={(text) => this.setState({ newChatName: text })}
-          style={styles.input}
-        />
-        <Button title="Update" onPress={this.updatenewChatName} />
-
-        <Text style={styles.userTitle}>Users in Chat:</Text>
-        {users && users.length > 0 ? (
-          <FlatList
-            data={users}
-            keyExtractor={(item) => item.user_id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.userItem}>
-                <Text style={styles.userName}>{`${item.first_name} ${item.last_name}`}</Text>
-                <Button title="Remove" onPress={() => this.removeUserFromChat(item.user_id)} />
-              </View>
-            )}
-          />
-        ) : (
-          <Text style={styles.noUsers}>No users in the chat</Text>
-        )}
-
-        <Button title="Add Users to Chat" onPress={this.navigateToAddToChat} />
-        <Button title="Back" onPress={() => this.props.navigation.goBack()} />
-
-        <Modal animationType="slide" visible={modalVisible} onRequestClose={this.hideModal} transparent>
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>{modalTitle}</Text>
-                <Text style={styles.modalMessage}>{modalMessage}</Text>
-                <Button title="Close" onPress={this.hideModal} />
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </View>
-    );
-  }
-}
+import PropTypes from 'prop-types';
 
 const styles = StyleSheet.create({
   container: {
@@ -225,7 +32,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
     fontSize: 20,
-
   },
   userItem: {
     flexDirection: 'row',
@@ -234,7 +40,6 @@ const styles = StyleSheet.create({
   },
   userName: {
     flex: 1,
-    // fontWeight: 'bold',
     fontSize: 20,
   },
   noUsers: {
@@ -269,5 +74,218 @@ const styles = StyleSheet.create({
   },
 });
 
+class UpdateChatScreen extends Component {
+  constructor(props) {
+    super(props);
+    const { chat_id } = props.route.params;
+    this.state = {
+      chat_id,
+      newChatName: '',
+      users: [],
+      modalVisible: false,
+      modalTitle: '',
+      modalMessage: '',
+    };
+  }
+
+  componentDidMount() {
+    this.fetchChatDetails();
+  }
+
+  navigateToAddToChat = () => {
+    const { chat_id } = this.state;
+    const { navigation } = this.props;
+    navigation.navigate('AddToChat', { chat_id });
+  };
+
+  navigateToChatPage = () => {
+    const { navigation } = this.props;
+    navigation.navigate('ChatList');
+  };
+
+  showModal = (title, message) => {
+    this.setState({
+      modalVisible: true,
+      modalTitle: title,
+      modalMessage: message,
+    });
+  };
+
+  hideModal = () => {
+    this.setState({ modalVisible: false });
+    this.navigateToChatPage();
+  };
+
+  fetchChatDetails = async () => {
+    try {
+      const { navigation } = this.props;
+      const { chat_id } = this.state; // Use object destructuring
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+      if (response.status === 200) {
+        const chatDetails = await response.json();
+        this.setState({
+          newChatName: chatDetails.name || '',
+          users: chatDetails.members || [],
+        });
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  updatenewChatName = async () => {
+    try {
+      const { navigation } = this.props;
+      const { chat_id, newChatName } = this.state;
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+        body: JSON.stringify({ name: newChatName }),
+      });
+      if (response.status === 200) {
+        this.showModal('Success', 'Chat name updated successfully');
+      } else if (response.status === 400) {
+        try {
+          const responseData = await response.json();
+          throw new Error('Bad Request:', responseData.message);
+        } catch (error) {
+          throw new Error('Bad Request: Invalid JSON');
+        }
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  removeUserFromChat = async (user_id) => {
+    try {
+      const { navigation } = this.props;
+      const { chat_id } = this.state;
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/user/${user_id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+
+      if (response.status === 200) {
+        this.showModal('Success', `User with ID ${user_id} removed from the chat`);
+        this.fetchChatDetails();
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  render() {
+    const {
+      newChatName,
+      users,
+      modalVisible,
+      modalTitle,
+      modalMessage,
+    } = this.state;
+
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Chat Name:</Text>
+        <TextInput
+          value={newChatName}
+          onChangeText={(text) => this.setState({ newChatName: text })}
+          style={styles.input}
+        />
+        <Button title="Update" onPress={this.updatenewChatName} />
+
+        <Text style={styles.userTitle}>Users in Chat:</Text>
+        {users && users.length > 0 ? (
+          <FlatList
+            data={users}
+            keyExtractor={(item) => item.user_id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.userItem}>
+                <Text style={styles.userName}>{`${item.first_name} ${item.last_name}`}</Text>
+                <Button title="Remove" onPress={() => this.removeUserFromChat(item.user_id)} />
+              </View>
+            )}
+          />
+        ) : (
+          <Text style={styles.noUsers}>No users in the chat</Text>
+        )}
+
+        <Button title="Add Users to Chat" onPress={this.navigateToAddToChat} />
+        <Button
+          title="Back"
+          onPress={() => {
+            const { navigation } = this.props;
+            navigation.goBack();
+          }}
+        />
+
+        <Modal animationType="slide" visible={modalVisible} onRequestClose={this.hideModal} transparent>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{modalTitle}</Text>
+                <Text style={styles.modalMessage}>{modalMessage}</Text>
+                <Button title="Close" onPress={this.hideModal} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
+}
+
+UpdateChatScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    goBack: PropTypes.func.isRequired,
+    setOptions: PropTypes.func.isRequired,
+  }).isRequired,
+  route: PropTypes.shape({
+    params: PropTypes.shape({
+      chat_id: PropTypes.number.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
 export default UpdateChatScreen;
-  

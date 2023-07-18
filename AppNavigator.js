@@ -8,19 +8,16 @@ import AddContactsScreen from './components/AddContact';
 import BlockedScreen from './components/BlockList';
 import ChatListScreen from './components/ChatList';
 import ContactScreen from './components/ContactList';
-import DeleteContactScreen from './components/DeleteContact';
 import AddToChatScreen from './components/AddToChat';
 import NewChatScreen from './components/NewChat';
 import UserProfileScreen from './components/UserProfile';
 import EditProfileScreen from './components/EditProfile';
 import CameraScreen1 from './components/Camera';
-import SendMessageScreen from './components/SendMessage';
 import SingleChatScreen from './components/SingleChat';
 import UpdateChatScreen from './components/UpdateChat';
 import EditChatScreen from './components/EditChat';
 import DraftMessageScreen from './components/DraftMessage';
 import DraftListScreen from './components/DraftList';
-
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -30,7 +27,6 @@ function ContactStack() {
     <Stack.Navigator>
       <Stack.Screen name="ContactList" component={ContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddContact" component={AddContactsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DeleteContact" component={DeleteContactScreen} options={{ headerShown: false }} />
       <Stack.Screen name="BlockList" component={BlockedScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
@@ -41,14 +37,12 @@ function ChatStack() {
     <Stack.Navigator>
       <Stack.Screen name="ChatList" component={ChatListScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NewChat" component={NewChatScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SendMessage" component={SendMessageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddToChat" component={AddToChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="SingleChat" component={SingleChatScreen} options={{ title: 'Chat' }} />
       <Stack.Screen name="UpdateChat" component={UpdateChatScreen} options={{ title: 'Edit Chat' }} />
       <Stack.Screen name="EditChat" component={EditChatScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DraftMessage" component={DraftMessageScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DraftListScreen" component={DraftListScreen} />
-
 
     </Stack.Navigator>
   );

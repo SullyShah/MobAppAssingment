@@ -1,14 +1,86 @@
 import React, { Component } from 'react';
-import { Text, View, Button, TextInput, Alert, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
+import {
+  Text,
+  View,
+  Button,
+  TextInput,
+  Alert,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Modal,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PropTypes from 'prop-types';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+  },
+  searchInput: {
+    padding: 10,
+    borderWidth: 2,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  userContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: 'gray',
+    marginVertical: 5,
+  },
+  listContainer: {
+    flexGrow: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    marginBottom: 20,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  header: {
+    paddingVertical: 10,
+    alignItems: 'flex-start',
+  },
+  backText: {
+    fontSize: 18,
+    color: 'blue',
+    textDecorationLine: 'underline',
+    marginLeft: 10,
+  },
+});
 
 class BlockedScreen extends Component {
-  state = {
-    blockedUsers: [],
-    searchQuery: '',
-    modalVisible: false,
-    modalContent: '',
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      blockedUsers: [],
+      searchQuery: '',
+      modalVisible: false,
+      modalContent: '',
+    };
+  }
 
   componentDidMount() {
     this.getBlockedList();
@@ -18,79 +90,78 @@ class BlockedScreen extends Component {
     this.setState({ searchQuery });
   };
 
-    BackButton = () => {
-    this.props.navigation.goBack();
-  };
-
-
   async getBlockedList() {
     try {
-      const response = await fetch("http://localhost:3333/api/1.0.0/blocked", {
-        method: "GET",
+      const response = await fetch('http://localhost:3333/api/1.0.0/blocked', {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token")
-        }
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
       });
-  
       if (response.status === 200) {
         const data = await response.json();
         this.setState({ blockedUsers: data });
       } else if (response.status === 401) {
-        throw "Unauthorised";
+        throw new Error('Unauthorised');
       } else {
-        throw "Server Error";
+        throw new Error('Server Error');
       }
     } catch (error) {
-      Alert.alert("Error", error.toString());
+      Alert.alert('Error', error.toString());
     }
-  }  
+  }
+
+  BackButton = () => {
+    const { navigation } = this.props;
+    navigation.goBack();
+  };
 
   async unblockUser(user_id) {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/block`, {
-        method: "DELETE",
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          "X-Authorization": await AsyncStorage.getItem("whatsthat_session_token"),
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-
       if (response.status === 200) {
-        this.setState({ modalVisible: true, modalContent: "User unblocked successfully" });
+        this.setState({ modalVisible: true, modalContent: 'User unblocked successfully' });
         this.getBlockedList();
       } else if (response.status === 400) {
-        throw "You can't unblock yourself";
+        throw new Error("You can't unblock yourself");
       } else if (response.status === 401) {
-        throw "Unauthorised";
+        throw new Error('Unauthorised');
       } else if (response.status === 404) {
-        throw "Not Found";
+        throw new Error('Not Found');
       } else {
-        throw "Server Error";
+        throw new Error('Server Error');
       }
     } catch (error) {
       this.setState({ modalVisible: true, modalContent: error.toString() });
     }
   }
 
-
-
   render() {
-    const { blockedUsers, searchQuery, modalVisible, modalContent } = this.state;
+    const {
+      blockedUsers,
+      searchQuery,
+      modalVisible,
+      modalContent,
+    } = this.state;
     let filteredBlockedUsers = blockedUsers;
 
     if (searchQuery) {
       const searchRegex = new RegExp(searchQuery, 'i');
-      filteredBlockedUsers = blockedUsers.filter(user => searchRegex.test(`${user.first_name} ${user.last_name}`));
+      filteredBlockedUsers = blockedUsers.filter((user) => searchRegex.test(`${user.first_name} ${user.last_name}`));
     }
 
     return (
       <View style={styles.container}>
-
-<TouchableOpacity onPress={this.BackButton} style={styles.header}>
+        <TouchableOpacity onPress={this.BackButton} style={styles.header}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-
 
         <TextInput
           placeholder="Search by name"
@@ -115,87 +186,35 @@ class BlockedScreen extends Component {
           contentContainerStyle={styles.listContainer}
         />
 
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => {
-              this.setState({ modalVisible: false });
-            }}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalText}>{modalContent}</Text>
-                <Button
-                  title="Close"
-                  onPress={() => {
-                    this.setState({ modalVisible: false });
-                  }}
-                />
-              </View>
+        <Modal
+          animationType="slide"
+          transparent
+          visible={modalVisible}
+          onRequestClose={() => {
+            this.setState({ modalVisible: false });
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>{modalContent}</Text>
+              <Button
+                title="Close"
+                onPress={() => {
+                  this.setState({ modalVisible: false });
+                }}
+              />
             </View>
-          </Modal>
-        </View>
-      );
-    }
+          </View>
+        </Modal>
+      </View>
+    );
   }
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 10,
-    },
-    searchInput: {
-      padding: 10,
-      borderWidth: 2,
-      borderRadius: 5,
-      marginBottom: 10,
-    },
-    userContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 10,
-    },
-    userName: {
-      fontSize: 18,
-      fontWeight: 'bold',
-    },
-    separator: {
-      height: 1,
-      backgroundColor: 'gray',
-      marginVertical: 5,
-    },
-    listContainer: {
-      flexGrow: 1,
-    },
-    modalContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modalContent: {
-      backgroundColor: 'white',
-      padding: 20,
-      borderRadius: 10,
-      alignItems: 'center',
-    },
-    modalText: {
-      marginBottom: 20,
-      fontSize: 18,
-      fontWeight: 'bold',
-      textAlign: 'center',
-    },
-    header: {
-      paddingVertical: 10,
-      alignItems: 'flex-start',
-    },
-    backText: {
-      fontSize: 18,
-      color: 'blue',
-      textDecorationLine: 'underline',
-      marginLeft: 10,
-    },
-  });
-  
-  export default BlockedScreen;
-  
+}
+
+BlockedScreen.propTypes = {
+  navigation: PropTypes.shape({
+    goBack: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default BlockedScreen;

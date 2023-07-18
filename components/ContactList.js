@@ -1,267 +1,17 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, Button, FlatList, TextInput, Alert, TouchableOpacity, Modal, Image, data } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  Image,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-class ContactScreen extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      contacts: [],
-      searchQuery: '',
-      password: '',
-      modalVisible: false,
-      modalContent: '',
-      filteredContacts: [],
-      selectedUser: null, 
-      profilePicture: data
-    };
-  }
-
-  static navigationOptions = {
-    header: null,
-  };
-
-  setModalVisible = (visible, content = '') => {
-    this.setState({ modalVisible: visible, modalContent: content });
-    if (!visible) {
-      setTimeout(() => {
-        this.setState({ modalContent: '' });
-      }, 2000);
-    }
-  };
-
-  componentDidMount() {
-    this.focusListener = this.props.navigation.addListener('focus', () => {
-      this.fetchContacts();
-    });
-  }
-
-  refreshContactsList = () => {
-    this.fetchContacts();
-  };
-
-  handleSearchChange = (searchQuery) => {
-    this.setState({ searchQuery }, this.filterContacts);
-  };
-
-  handleSearch = () => {
-    this.filterContacts();
-  };
-
-  showUserProfile = async (item) => {
-    console.log(item); // log the user object
-    const profilePicture = await this.GPI(item.user_id);
-    this.setState({ selectedUser: item, profilePicture });
-    this.setModalVisible(true);
-  };
-
-  
-
-  filterContacts = () => {
-    const { searchQuery, contacts } = this.state;
-    if (searchQuery) {
-      const filteredContacts = contacts.filter(
-        (contact) =>
-          contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          contact.last_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      this.setState({ filteredContacts });
-    } else {
-      this.setState({ filteredContacts: contacts });
-    }
-  };
-
-  fetchContacts = async () => {
-    try {
-      const response = await this.getContacts();
-      const sortedContacts = response.sort((a, b) => {
-        const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
-        const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-      this.setState({ contacts: sortedContacts, filteredContacts: sortedContacts });
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  getContacts = async () => {
-    try {
-      const token = await AsyncStorage.getItem('whatsthat_session_token');
-      const response = await fetch('http://localhost:3333/api/1.0.0/contacts', {
-        method: 'GET',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-      });
-      if (response.status === 200) {
-        return response.json();
-      } else if (response.status === 401) {
-        throw 'Unauthorised';
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  DeleteUser = async (user_id) => {
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/contact`, {
-        method: 'DELETE',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: user_id }),
-      });
-      if (response.status === 200) {
-        this.fetchContacts();
-        this.setModalVisible(true, 'User removed successfully');
-      } else if (response.status === 400) {
-        throw "You can't remove yourself as a contact";
-      } else if (response.status === 404) {
-        throw 'Unauthorised';
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  blockUser = async (user_id) => {
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/block`, {
-        method: 'POST',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 200) {
-        this.fetchContacts();
-        this.setModalVisible(true, 'User blocked successfully');
-      } else if (response.status === 401) {
-        throw 'Unauthorised';
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to block user');
-    }
-  };
-
-  GPI = async (userId) => {
-    try {
-      let response = await fetch(`http://localhost:3333/api/1.0.0/user/${userId}/photo`, {
-        method: 'GET',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        }
-      });
-  
-      let resBlob = await response.blob();
-      let data = URL.createObjectURL(resBlob);
-  
-      return data;
-    } catch(err) {
-      console.log("error", err);
-      return '';
-    }
-  };
-
-  render() {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Contacts</Text>
-        </View>
-
-        <TextInput
-          value={this.state.searchQuery}
-          onChangeText={this.handleSearchChange}
-          placeholder="Type in the user's name to search."
-          style={styles.input}
-        />
-
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Add Contacts"
-            onPress={() =>
-              this.props.navigation.navigate('AddContact', {
-                onRefreshContacts: this.refreshContactsList,
-              })
-            }
-          />
-
-          <Button
-            title="Unblock Contacts"
-            onPress={() => this.props.navigation.navigate('BlockList')}
-          />
-        </View>
-
-        <FlatList
-          contentContainerStyle={{ flexGrow: 1 }}
-          data={this.state.filteredContacts}
-          keyExtractor={(item) => item.user_id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.contactItem}>
-              <TouchableOpacity onPress={() => this.showUserProfile(item)}>
-                <Text style={styles.contactText}>
-                  {item.first_name} {item.last_name}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.buttonContainer}>
-                <Button title="Remove" onPress={() => this.DeleteUser(item.user_id)}  color="red" />
-                <Button title="Block" onPress={() => this.blockUser(item.user_id)} />
-              </View>
-            </View>
-          )}
-        />
-<Modal
-  animationType="slide"
-  transparent={true}
-  visible={this.state.modalVisible}
-  onRequestClose={() => {
-    this.setModalVisible(false);
-  }}
->
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-    {this.state.selectedUser ? (
-        <View style={styles.userInfo}>
-          <Image source={{ uri: this.state.profilePicture }} style={styles.profilePicture} />
-          <Text style={styles.userName}>
-            {this.state.selectedUser.first_name} {this.state.selectedUser.last_name}
-          </Text>
-          <Text style={styles.userEmail}>
-            Email: {this.state.selectedUser.email}
-          </Text>
-        </View>
-      ) : (
-        <Text style={styles.modalText}>{this.state.modalContent}</Text>
-      )}
-
-
-      <Button
-        title="Close"
-        onPress={() => {
-          this.setModalVisible(false);
-          this.setState({ selectedUser: null });
-        }}
-      />
-    </View>
-  </View>
-</Modal>
-
-      </View>
-    );
-  }
-}
+import PropTypes from 'prop-types';
 
 const styles = StyleSheet.create({
   container: {
@@ -299,8 +49,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonContainer: {
-    flexDirection: 'row', // Added this line
-    justifyContent: 'space-between', // Added this line to create space between buttons
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginVertical: 10,
   },
   modalContainer: {
@@ -340,5 +90,261 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+class ContactScreen extends Component {
+  static navigationOptions = {
+    header: null,
+  };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      contacts: [],
+      searchQuery: '',
+      modalVisible: false,
+      modalContent: '',
+      filteredContacts: [],
+      selectedUser: null,
+      profilePicture: '',
+    };
+  }
+
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.focusListener = navigation.addListener('focus', () => {
+      this.fetchContacts();
+    });
+  }
+
+  componentWillUnmount() {
+    this.focusListener?.remove();
+  }
+
+  setModalVisible = (visible, content = '') => {
+    this.setState({ modalVisible: visible, modalContent: content });
+    if (!visible) {
+      setTimeout(() => {
+        this.setState({ modalContent: '' });
+      }, 2000);
+    }
+  };
+
+  refreshContactsList = () => {
+    this.fetchContacts();
+  };
+
+  handleSearchChange = (searchQuery) => {
+    this.setState({ searchQuery }, this.filterContacts);
+  };
+
+  showUserProfile = async (item) => {
+    const profilePicture = await this.GPI(item.user_id);
+    this.setState({ selectedUser: item, profilePicture });
+    this.setModalVisible(true);
+  };
+
+  filterContacts = () => {
+    const { searchQuery, contacts } = this.state;
+    if (searchQuery) {
+      const filteredContacts = contacts.filter(
+        (contact) => contact.first_name.toLowerCase().includes(searchQuery.toLowerCase())
+        || contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+      this.setState({ filteredContacts });
+    } else {
+      this.setState({ filteredContacts: contacts });
+    }
+  };
+
+  fetchContacts = async () => {
+    try {
+      const response = await this.getContacts();
+      const sortedContacts = response.sort((a, b) => {
+        const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+        const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      this.setState({ contacts: sortedContacts, filteredContacts: sortedContacts });
+    } catch (error) {
+      throw new Error('Failed to fetch contacts');
+    }
+  };
+
+  getContacts = async () => {
+    try {
+      const response = await fetch('http://localhost:3333/api/1.0.0/contacts', {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+      if (response.status === 200) {
+        return response.json();
+      }
+      throw new Error('Unauthorised');
+    } catch (error) {
+      throw new Error('Failed to get contacts');
+    }
+  };
+
+  DeleteUser = async (user_id) => {
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/contact`, {
+        method: 'DELETE',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id }),
+      });
+      if (response.status === 200) {
+        this.fetchContacts();
+        this.setModalVisible(true, 'User removed successfully');
+      } else if (response.status === 400) {
+        throw new Error("You can't remove yourself as a contact");
+      } else if (response.status === 404) {
+        throw new Error('Unauthorised');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error('Failed to delete contact');
+    }
+  };
+
+  blockUser = async (user_id) => {
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/block`, {
+        method: 'POST',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        this.fetchContacts();
+        this.setModalVisible(true, 'User blocked successfully');
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error('Failed to block contact');
+    }
+  };
+
+  GPI = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/user/${userId}/photo`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+      });
+
+      const resBlob = await response.blob();
+      const data = URL.createObjectURL(resBlob);
+
+      return data;
+    } catch (err) {
+      return '';
+    }
+  };
+
+  render() {
+    const {
+      searchQuery,
+      filteredContacts,
+      modalVisible,
+      selectedUser,
+      profilePicture,
+      modalContent,
+    } = this.state;
+    const { navigation } = this.props;
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Contacts</Text>
+        </View>
+
+        <TextInput
+          value={searchQuery}
+          onChangeText={this.handleSearchChange}
+          placeholder="Type in the user's name to search."
+          style={styles.input}
+        />
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Add Contacts"
+            onPress={() => navigation.navigate('AddContact', { onRefreshContacts: this.refreshContactsList })}
+          />
+
+          <Button title="Unblock Contacts" onPress={() => navigation.navigate('BlockList', { onRefreshContacts: this.refreshContactsList })} />
+        </View>
+
+        <FlatList
+          contentContainerStyle={{ flexGrow: 1 }}
+          data={filteredContacts}
+          keyExtractor={(item) => item.user_id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.contactItem}>
+              <TouchableOpacity onPress={() => this.showUserProfile(item)}>
+                <Text style={styles.contactText}>
+                  {item.first_name} {item.last_name}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.buttonContainer}>
+                <Button title="Remove" onPress={() => this.DeleteUser(item.user_id)} color="red" />
+                <Button title="Block" onPress={() => this.blockUser(item.user_id)} />
+              </View>
+            </View>
+          )}
+        />
+
+        <Modal
+          animationType="slide"
+          transparent
+          visible={modalVisible}
+          onRequestClose={() => {
+            this.setModalVisible(false);
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {selectedUser ? (
+                <View style={styles.userInfo}>
+                  <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
+                  <Text style={styles.userName}>
+                    {selectedUser.first_name} {selectedUser.last_name}
+                  </Text>
+                  <Text style={styles.userEmail}>Email: {selectedUser.email}</Text>
+                </View>
+              ) : (
+                <Text style={styles.modalText}>{modalContent}</Text>
+              )}
+
+              <Button
+                title="Close"
+                onPress={() => {
+                  this.setModalVisible(false);
+                  this.setState({ selectedUser: null });
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
+}
+ContactScreen.propTypes = {
+  navigation: PropTypes.shape({
+    addListener: PropTypes.func.isRequired,
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 export default ContactScreen;

@@ -1,339 +1,17 @@
 import React, { Component } from 'react';
-import { TextInput, Button, View, Text, StyleSheet, Alert, TouchableOpacity, FlatList } from 'react-native';
+import PropTypes from 'prop-types';
+import {
+  TextInput,
+  Button,
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
-
-class SingleChatScreen extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      singleChat: null,
-      currentUser: null,
-      error: null,
-      newMessage: '',
-      draftMessage: '',
-      messages: [],
-      isTyping: false,
-      isDraft: false,
-    };
-    this.timer = null;
-  }
-
-  componentDidMount() {
-    const { route, navigation } = this.props;
-    console.log(route.params); // add this line to check the parameters
-    const { chat_id } = route?.params || {}; // Here's the modification
-    if (!chat_id) {
-      console.error('No chat_id provided');
-      return; // exit the function if chat_id is not available
-    }
-    this.viewSingleChat(chat_id);
-    this.setState({ currentchat_id: chat_id });
-
-    navigation.setOptions({
-      title: chat_id,
-      headerRight: () => (
-        <View style={{ flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => navigation.navigate('UpdateChat', { chat_id })}>
-            <Text style={{ color: 'blue', marginRight: 10, fontWeight: 'bold', textDecorationLine: 'underline', fontSize: 15 }}>
-              Edit Chat
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this.navigateToDraftListScreen}>
-            <Text style={{ color: 'blue', marginRight: 10, fontWeight: 'bold', textDecorationLine: 'underline', fontSize: 15 }}>
-              Load Draft
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  
-    AsyncStorage.getItem('whatsthat_user_id').then(userId => {
-      console.log('Fetched user from AsyncStorage:', userId);
-      if (userId) {
-        this.setState({ currentUser: Number(userId) });
-      }
-    });
-  
-    const draftMessageKey = `whatsthat_draft_message_${chat_id}`; // Generate the draft message key based on chat_id
-    AsyncStorage.getItem(draftMessageKey).then(draftMessage => {
-      if (draftMessage) {
-        this.setState({ draftMessage, isDraft: true });
-      } else {
-        this.setState({ draftMessage: '', isDraft: false });
-      }
-    });
-  
-    this.startPolling();
-  }
-
-  startPolling = () => {
-    this.timer = setInterval(() => {
-      const { currentchat_id } = this.state;
-      if(currentchat_id) {
-          this.fetchNewMessages(currentchat_id);
-      }
-    }, 1000); 
-  };
-
-  stopPolling = () => {
-    clearInterval(this.timer);
-  };
-
-  handleMessageLongPress = (message) => {
-    const { currentchat_id } = this.state;
-    this.props.navigation.navigate('EditChat', {
-      chat_id: currentchat_id,
-      message_id: message.message_id,
-      message_content: message.message,
-    });
-  };
-
-  handleMessageInputChange = (text) => {
-    this.setState({
-      newMessage: text,
-      isTyping: text.length > 0,
-    });
-  };
-
-  handleEditDraft = (updatedDraftMessage) => {
-    this.setState({ newMessage: updatedDraftMessage });
-    AsyncStorage.setItem(`whatsthat_draft_message_${this.state.currentchat_id}`, updatedDraftMessage);
-  };
-
-  handleDeleteDraft = () => {
-    this.setState({ newMessage: '', isDraft: false });
-    AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`);
-  };
-
-  handleSendDraft = (draftMessage) => {
-    this.sendMessage(draftMessage); // Pass the draft message to sendMessage function
-  };
-
-  saveDraftMessage = async () => {
-    if (this.state.newMessage.length > 0) {
-      const timestamp = Date.now(); // Add a timestamp to make each draft unique
-      const draftMessageKey = `whatsthat_draft_message_${this.state.currentchat_id}_${timestamp}`; 
-      try {
-        await AsyncStorage.setItem(draftMessageKey, this.state.newMessage);
-        this.setState({ isTyping: false, isDraft: true, newMessage: '' }); 
-      } catch (error) {
-        console.log('Error saving draft message:', error);
-      }
-    }
-  };
-  navigateToDraftListScreen = () => {
-    // this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.chat_id });
-      this.props.navigation.navigate('DraftListScreen', { chat_id: this.state.currentchat_id });
-    
-    
-  };
-  
-  
-  loadDraftMessage = async () => {
-    const { currentchat_id } = this.state;
-    try {
-      const draftMessage = await AsyncStorage.getItem(`whatsthat_draft_message_${currentchat_id}`);
-      if (draftMessage) {
-        this.setState({ newMessage: draftMessage, isDraft: true });
-      } else {
-        this.setState({ newMessage: '', isDraft: false });
-      }
-    } catch (error) {
-      console.log('Error loading draft message:', error);
-    }
-  };
-  
-  sendMessage = async () => {
-    if (this.state.newMessage && this.state.currentchat_id) {
-      const messageToSend = this.state.newMessage; // Store the message to be sent
-  
-      try {
-        await this.SendMessage(this.state.currentchat_id, messageToSend);
-        await AsyncStorage.setItem('whatsthat_user_id', this.state.currentUser.toString()); // Set the current user ID again
-        await AsyncStorage.removeItem(`whatsthat_draft_message_${this.state.currentchat_id}`); // Remove draft for the current chat
-        this.setState({ newMessage: '', isTyping: false, isDraft: false });
-      } catch (error) {
-        Alert.alert('Error', error.toString());
-      }
-    }
-  };
-  
-  navigateToDraftScreen = () => {
-    const { navigation } = this.props;
-    const { newMessage, currentchat_id } = this.state;
-    navigation.navigate('DraftMessage', {
-      draftMessage: newMessage,
-      chat_id: currentchat_id,
-      handleEditDraft: this.handleEditDraft, // Pass the handleEditDraft function to DraftMessageScreen
-      handleDeleteDraft: this.handleDeleteDraft, // Pass the handleDeleteDraft function to DraftMessageScreen
-      handleSendDraft: this.handleSendDraft, // Pass the handleSendDraft function to DraftMessageScreen
-    });
-  };
-  
-
-  async viewSingleChat(chat_id) {
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
-        method: 'GET',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.status === 200) {
-        const chat = await response.json();
-        this.setState({
-          singleChat: chat,
-          messages: chat.messages || [],
-        });
-        this.props.navigation.setOptions({ title: chat.name });
-      } else if (response.status === 401) {
-        console.log('Unauthorised');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      this.setState({ error: error });
-    }
-  }
-
-  async SendMessage(chat_id, message) {
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-        },
-        body: JSON.stringify({
-          message: message,
-        }),
-      });
-      if (response.status === 200) {
-        const chatDetails = await response.json();
-        this.setState({
-          chatDetails: Details,
-          messages: chatDetails.messages || [],
-        });
-      } else if (response.status === 400) {
-        console.log('Bad Request');
-      } else if (response.status === 401) {
-        console.log('Unathorised');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      this.setState({ error: error });
-    }
-  }
-  fetchNewMessages = async (chat_id = null) => {
-    if(!chat_id) return; 
-    try {
-      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
-        method: 'GET',
-        headers: {
-          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.status === 200) {
-        const chat = await response.json();
-        this.setState({
-          messages: chat.messages || [],
-        });
-      } else if (response.status === 401) {
-        console.log('Unauthorised');
-        await AsyncStorage.removeItem('whatsthat_session_token');
-        await AsyncStorage.removeItem('whatsthat_user_id');
-        this.props.navigation.navigate('Login');
-      } else if (response.status === 403) {
-        console.log('Forbidden');
-      } else if (response.status === 404) {
-        console.log('Not Found');
-        this.stopPolling();  // stop the polling if the chat is not found
-      } else {
-        throw 'Server Error';
-      }
-    } catch (error) {
-      console.log('Error fetching new messages:', error);
-    }
-  };
-
-  
-
-  render() {
-    const { singleChat, messages, currentUser, newMessage, isTyping, isDraft } = this.state;
-  
-    if (!singleChat) {
-      return <Text>Loading...</Text>;
-    }
-  
-    return (
-      <View style={styles.container}>
-        <FlatList
-          inverted
-          data={messages}
-          keyExtractor={(item) => item.message_id.toString()}
-          renderItem={({ item: msg }) => (
-            <TouchableOpacity
-              onLongPress={() => this.handleMessageLongPress(msg)}
-            >
-              <View
-                style={[
-                  styles.messageBox,
-                  msg.author.user_id === currentUser ? styles.rightAlign : styles.leftAlign,
-                ]}
-              >
-                <Text style={styles.messageSender}>{msg.author.first_name}</Text>
-                <Text style={styles.messageText}>{msg.message}</Text>
-                <Text style={styles.messageTime}>
-                  {moment(msg.timestamp).format('MMMM Do YYYY, h:mm a')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type your message here..."
-            value={newMessage}
-            onChangeText={this.handleMessageInputChange}
-          />
-
-        {isTyping && (
-          <TouchableOpacity onPress={this.saveDraftMessage}>
-            <Text style={styles.buttonText}>Save Draft</Text>
-          </TouchableOpacity>
-        )}
-  
-          {/* {isDraft && newMessage === '' && (
-            <TouchableOpacity onPress={this.navigateToDraftListScreen}>
-              <Text style={styles.buttonText}>Load Draft</Text>
-            </TouchableOpacity>
-          )} */}
-  
-          <Button title="Send" onPress={this.sendMessage} />
-        </View>
-      </View>
-    );
-  }
-  }
 
 const styles = StyleSheet.create({
   container: {
@@ -394,5 +72,303 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
+
+class SingleChatScreen extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      singleChat: null,
+      currentUser: null,
+      newMessage: '',
+      messages: [],
+      isTyping: false,
+    };
+  }
+
+  componentDidMount() {
+    const { route, navigation } = this.props;
+    const { chat_id } = route?.params || {};
+    if (!chat_id) {
+      throw new Error('No chat_id provided');
+    }
+    this.viewSingleChat(chat_id);
+    this.setState({ currentchat_id: chat_id });
+    this.setupNavigationOptions(navigation);
+    this.fetchCurrentUser();
+    this.startPolling();
+  }
+
+  setupNavigationOptions = (navigation) => {
+    const { route } = this.props;
+    const { chat_id } = route?.params || {};
+
+    navigation.setOptions({
+      title: chat_id,
+      headerRight: () => this.renderHeaderOptions(),
+    });
+  };
+
+  renderHeaderOptions = () => {
+    const { navigation } = this.props;
+    const { route } = this.props;
+    const { chat_id } = route?.params || {};
+
+    return (
+      <View style={{ flexDirection: 'row' }}>
+        <TouchableOpacity onPress={() => navigation.navigate('UpdateChat', { chat_id })}>
+          <Text style={styles.buttonText}>Edit Chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={this.navigateToDraftListScreen}>
+          <Text style={styles.buttonText}>Load Draft</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  fetchCurrentUser = async () => {
+    const userId = await AsyncStorage.getItem('whatsthat_user_id');
+    if (userId) {
+      this.setState({ currentUser: Number(userId) });
+    }
+  };
+
+  startPolling = () => {
+    setInterval(() => {
+      const { currentchat_id } = this.state;
+      if (currentchat_id) {
+        this.fetchNewMessages(currentchat_id);
+      }
+    }, 1000);
+  };
+
+  handleMessageLongPress = (message) => {
+    const { currentchat_id } = this.state;
+    const { navigation } = this.props;
+    navigation.navigate('EditChat', {
+      chat_id: currentchat_id,
+      message_id: message.message_id,
+      message_content: message.message,
+    });
+  };
+
+  handleMessageInputChange = (text) => {
+    this.setState({
+      newMessage: text,
+      isTyping: text.length > 0,
+    });
+  };
+
+  saveDraftMessage = async () => {
+    const { newMessage, currentchat_id } = this.state;
+    if (newMessage.length > 0) {
+      const timestamp = Date.now(); // Add a timestamp to make each draft unique
+      const draftMessageKey = `whatsthat_draft_message_${currentchat_id}_${timestamp}`;
+      try {
+        await AsyncStorage.setItem(draftMessageKey, newMessage);
+        this.setState({ isTyping: false, newMessage: '' });
+      } catch (error) {
+        throw new Error('Error saving draft message:', error);
+      }
+    }
+  };
+
+  navigateToDraftListScreen = () => {
+    const { navigation } = this.props;
+    const { currentchat_id } = this.state;
+    navigation.navigate('DraftListScreen', { chat_id: currentchat_id.toString() });
+  };
+
+  sendMessage = async () => {
+    const { newMessage, currentchat_id, currentUser } = this.state;
+    if (newMessage && currentchat_id) {
+      const messageToSend = newMessage;
+
+      try {
+        await this.SendMessage(currentchat_id, messageToSend);
+        await AsyncStorage.setItem('whatsthat_user_id', currentUser.toString()); // Set the current user ID again
+        await AsyncStorage.removeItem(`whatsthat_draft_message_${currentchat_id}`); // Remove draft for the current chat
+        this.setState({ newMessage: '', isTyping: false });
+      } catch (error) {
+        Alert.alert('Error', error.toString());
+      }
+    }
+  };
+
+  fetchNewMessages = async (chat_id = null) => {
+    const { navigation } = this.props;
+    if (!chat_id) return;
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        const chat = await response.json();
+        this.setState({
+          messages: chat.messages || [],
+        });
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+        throw new Error('Unauthorised');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        this.stopPolling(); // stop the polling if the chat is not found
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error('Error fetching new messages:', error);
+    }
+  };
+
+  async SendMessage(chat_id, message) {
+    const { navigation } = this.props;
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+        },
+        body: JSON.stringify({
+          message,
+        }),
+      });
+      if (response.status === 200) {
+        const chatDetails = await response.json();
+        this.setState({
+          messages: chatDetails.messages || [],
+        });
+      } else if (response.status === 400) {
+        throw new Error('Bad Request');
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+        throw new Error('Unathorised');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async viewSingleChat(chat_id) {
+    const { navigation } = this.props;
+    try {
+      const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
+        method: 'GET',
+        headers: {
+          'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        const chat = await response.json();
+        this.setState({
+          singleChat: chat,
+          messages: chat.messages || [],
+        });
+        navigation.setOptions({ title: chat.name });
+      } else if (response.status === 401) {
+        await AsyncStorage.removeItem('whatsthat_session_token');
+        await AsyncStorage.removeItem('whatsthat_user_id');
+        navigation.navigate('Login');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
+      } else {
+        throw new Error('Server Error');
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  render() {
+    const {
+      singleChat,
+      messages,
+      currentUser,
+      newMessage,
+      isTyping,
+    } = this.state;
+
+    if (!singleChat) {
+      return <Text>Loading...</Text>;
+    }
+
+    return (
+      <View style={styles.container}>
+
+        <FlatList
+          inverted
+          data={messages}
+          keyExtractor={(item) => item.message_id.toString()}
+          renderItem={({ item: msg }) => (
+            <TouchableOpacity onLongPress={() => this.handleMessageLongPress(msg)}>
+              <View
+                style={[
+                  styles.messageBox,
+                  msg.author.user_id === currentUser ? styles.rightAlign : styles.leftAlign,
+                ]}
+              >
+                <Text style={styles.messageSender}>{msg.author.first_name}</Text>
+                <Text style={styles.messageText}>{msg.message}</Text>
+                <Text style={styles.messageTime}>
+                  {moment(msg.timestamp).format('MMMM Do YYYY, h:mm a')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message here..."
+            value={newMessage}
+            onChangeText={this.handleMessageInputChange}
+          />
+
+          {isTyping && (
+            <TouchableOpacity onPress={this.saveDraftMessage}>
+              <Text style={styles.buttonText}>Save Draft</Text>
+            </TouchableOpacity>
+          )}
+
+          <Button title="Send" onPress={this.sendMessage} />
+        </View>
+      </View>
+    );
+  }
+}
+
+SingleChatScreen.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    goBack: PropTypes.func.isRequired,
+    setOptions: PropTypes.func.isRequired,
+  }).isRequired,
+  route: PropTypes.shape({
+    params: PropTypes.shape({
+      chat_id: PropTypes.number.isRequired,
+      message_id: PropTypes.number, // removed isRequired
+    }).isRequired,
+  }).isRequired,
+};
 
 export default SingleChatScreen;
