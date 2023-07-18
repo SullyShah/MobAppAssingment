@@ -10,7 +10,8 @@ module.exports = {
       rules: {
         camelcase: ["error", {
           properties: "never",
-          allow: ["user_id", "chat_id", "message_id", "first_name", "last_name", "session_token"], // Add "chat_id" to the "allow" array
+          allow: ["user_id", "chat_id", "message_id", "first_name", "last_name", "session_token"],
+          'class-methods-use-this': 'off',
         }],
       },
     },

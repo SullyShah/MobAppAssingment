@@ -117,14 +117,14 @@ class UserProfileScreen extends Component {
       if (response.status === 200) {
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
-        navigation.navigate.navigate('Login');
+        navigation.navigate('Login');
       } else if (response.status === 401) {
         throw new Error('Unauthorised');
       } else {
         throw new Error('Server Error');
       }
     } catch (error) {
-      this.showErrorModal(error.toString());
+      throw new Error(error.toString());
     }
   };
 

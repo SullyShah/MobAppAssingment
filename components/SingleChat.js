@@ -371,8 +371,8 @@ SingleChatScreen.propTypes = {
   }).isRequired,
   route: PropTypes.shape({
     params: PropTypes.shape({
-      chat_id: PropTypes.number.isRequired,
-      message_id: PropTypes.number, // removed isRequired
+      chat_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      message_id: PropTypes.number,
     }).isRequired,
   }).isRequired,
 };

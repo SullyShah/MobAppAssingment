@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
+  Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DatePicker from 'react-datepicker';
@@ -18,7 +19,7 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#eaf7ea', // Light green background color
+    backgroundColor: '#eaf7ea',
   },
   input: {
     borderColor: '#ccc',
@@ -35,23 +36,51 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    backgroundColor: 'blue', // Blue button color
+    backgroundColor: 'blue',
     borderRadius: 5,
     padding: 10,
     marginTop: 10,
-    width: '48%', // Adjust the width as desired
+    width: '48%',
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: 'blue', // Blue button color
+    backgroundColor: 'blue',
     borderRadius: 5,
-    paddingVertical: 8, // Adjust the vertical padding as desired
-    paddingHorizontal: 16, // Adjust the horizontal padding as desired
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     position: 'absolute',
-    bottom: 20, // Adjust the distance from the bottom as desired
+    bottom: 20,
     alignSelf: 'center',
   },
   buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalButton: {
+    backgroundColor: 'blue',
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 10,
+  },
+  modalButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
@@ -66,6 +95,7 @@ class DraftMessageScreen extends Component {
       chat_id: '',
       scheduledDate: new Date(),
       showDatePicker: false,
+      errorModalVisible: false, // New state variable
     };
   }
 
@@ -74,7 +104,7 @@ class DraftMessageScreen extends Component {
       route: {
         params: { draftMessageKey },
       },
-      navigation, // Add navigation prop here
+      navigation,
     } = this.props;
     const chat_id = draftMessageKey.replace('whatsthat_draft_message_', ''); // Extract chat_id from draftMessageKey
     this.setState({ chat_id });
@@ -87,6 +117,12 @@ class DraftMessageScreen extends Component {
   componentWillUnmount() {
     this.focusListener();
   }
+
+  toggleErrorModal = () => {
+    this.setState((prevState) => ({
+      errorModalVisible: !prevState.errorModalVisible,
+    }));
+  };
 
   loadDraftMessage = async (chat_id) => {
     try {
@@ -117,15 +153,18 @@ class DraftMessageScreen extends Component {
 
   handleSendDraft = async () => {
     const { navigation } = this.props;
-    const { draftMessage, chat_id, scheduledDate } = this.state;
+    const { chat_id, scheduledDate } = this.state;
 
     try {
-      await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
-      await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
-      this.scheduleMessage();
-      navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+      if (moment(scheduledDate).isSameOrAfter(moment())) {
+        await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
+        this.scheduleMessage();
+        navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+      } else {
+        throw new Error('Scheduled date and time must be in the future.');
+      }
     } catch (error) {
-      throw new Error('Error sending draft message:', error);
+      this.setState({ errorModalVisible: true }); // Show the error modal
     }
   };
 
@@ -168,12 +207,12 @@ class DraftMessageScreen extends Component {
     }
   };
 
-  handleEditButton = async (navigation) => {
-    const { draftMessage, chat_id, scheduledDate } = this.state;
+  handleEditButton = async () => {
+    const { draftMessage, chat_id } = this.state;
+    const { navigation } = this.props;
+
     try {
       await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
-      await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
-      this.scheduleMessage();
       navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
     } catch (error) {
       throw new Error('Error saving edited draft message:', error);
@@ -194,7 +233,6 @@ class DraftMessageScreen extends Component {
     const { chat_id, draftMessage } = this.state;
     try {
       await this.sendMessageWithDraft(chat_id, draftMessage);
-      // Remove the draft message and scheduled date from local storage
       await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
       await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
       const { navigation } = this.props;
@@ -222,23 +260,21 @@ class DraftMessageScreen extends Component {
         throw new Error('Scheduled date and time must be in the future.');
       }
     } catch (error) {
-      throw new Error('Error scheduling message:', error);
+      // throw new Error('Scheduled date and time must be in the future.');
     }
   };
 
   handleDateChange = (selectedDate) => {
     const currentDate = moment();
     const selected = moment(selectedDate);
+    const { showDatePicker } = this.state;
 
-    if (selected.isSameOrAfter(currentDate, 'day')) {
-      if (selected.isSame(currentDate, 'day') && selected.isBefore(currentDate)) {
-        // Selected time is in the past within the current day
-        throw new Error('Cannot select a past time within the current day');
-      } else {
+    if (showDatePicker) {
+      if (selected.isSameOrAfter(currentDate)) {
         this.setState({ scheduledDate: selectedDate, showDatePicker: false });
       }
     } else {
-      throw new Error('Cannot select a past date');
+      this.setState({ scheduledDate: selectedDate });
     }
   };
 
@@ -251,6 +287,7 @@ class DraftMessageScreen extends Component {
       draftMessage,
       scheduledDate,
       showDatePicker,
+      errorModalVisible,
     } = this.state;
     const formattedDate = moment(scheduledDate).format('DD/MM/HH:mm');
 
@@ -292,6 +329,18 @@ class DraftMessageScreen extends Component {
         <TouchableOpacity style={styles.cancelButton} onPress={this.handleCancel}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
+
+        {/* Modal */}
+        <Modal visible={errorModalVisible} animationType="fade" transparent>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>Cannot select a past date or time</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={this.toggleErrorModal}>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }

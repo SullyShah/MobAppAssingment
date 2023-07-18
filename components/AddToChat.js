@@ -262,7 +262,7 @@ AddToChatScreen.propTypes = {
       chat_id: PropTypes.number.isRequired,
     }).isRequired,
   }).isRequired,
-  navigation: PropTypes.shape.isRequired,
+  navigation: PropTypes.object.isRequired,
 };
 
 export default AddToChatScreen;

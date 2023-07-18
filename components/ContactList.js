@@ -117,7 +117,9 @@ class ContactScreen extends Component {
   }
 
   componentWillUnmount() {
-    this.focusListener?.remove();
+    if (typeof this.focusListener?.remove === 'function') {
+      this.focusListener.remove();
+    }
   }
 
   setModalVisible = (visible, content = '') => {
