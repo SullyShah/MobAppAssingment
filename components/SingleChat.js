@@ -137,7 +137,7 @@ class SingleChatScreen extends Component {
       if (currentchat_id) {
         this.fetchNewMessages(currentchat_id);
       }
-    }, 1000);
+    }, 500);
   };
 
   handleMessageLongPress = (message) => {
@@ -160,7 +160,7 @@ class SingleChatScreen extends Component {
   saveDraftMessage = async () => {
     const { newMessage, currentchat_id } = this.state;
     if (newMessage.length > 0) {
-      const timestamp = Date.now(); // Add a timestamp to make each draft unique
+      const timestamp = Date.now();
       const draftMessageKey = `whatsthat_draft_message_${currentchat_id}_${timestamp}`;
       try {
         await AsyncStorage.setItem(draftMessageKey, newMessage);
@@ -184,11 +184,10 @@ class SingleChatScreen extends Component {
 
       try {
         await this.SendMessage(currentchat_id, messageToSend);
-        await AsyncStorage.setItem('whatsthat_user_id', currentUser.toString()); // Set the current user ID again
-        await AsyncStorage.removeItem(`whatsthat_draft_message_${currentchat_id}`); // Remove draft for the current chat
+        await AsyncStorage.setItem('whatsthat_user_id', currentUser.toString());
+        await AsyncStorage.removeItem(`whatsthat_draft_message_${currentchat_id}`);
         this.setState({ newMessage: '', isTyping: false });
       } catch (error) {
-        // throw new Error('Error');
         throw new Error(error);
       }
     }
@@ -218,7 +217,7 @@ class SingleChatScreen extends Component {
       } else if (response.status === 403) {
         throw new Error('Forbidden');
       } else if (response.status === 404) {
-        this.stopPolling(); // stop the polling if the chat is not found
+        this.stopPolling();
         throw new Error('Not Found');
       } else {
         throw new Error('Server Error');

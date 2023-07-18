@@ -182,7 +182,7 @@ class AddContactsScreen extends Component {
         const responseData = await response.json();
         const { addedUsers } = this.state;
         const addedUsersSet = new Set(addedUsers && addedUsers.map((user) => user.user_id));
-        const blockedUsersSet = new Set(await this.getBlockedList()); // Fetch blocked users
+        const blockedUsersSet = new Set(await this.getBlockedList());
         const users = responseData.filter(
           (user) => !addedUsersSet.has(user.user_id) && !blockedUsersSet.has(user.user_id),
         );
@@ -298,7 +298,6 @@ class AddContactsScreen extends Component {
                 onPress={() => {
                   this.setModalVisible(false);
                   if (errorMessage === 'Contact added successfully') {
-                    // Do nothing or add appropriate code if needed
                   }
                 }}
               >

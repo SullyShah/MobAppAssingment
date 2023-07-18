@@ -95,7 +95,7 @@ class DraftMessageScreen extends Component {
       chat_id: '',
       scheduledDate: new Date(),
       showDatePicker: false,
-      errorModalVisible: false, // New state variable
+      errorModalVisible: false,
     };
   }
 
@@ -106,7 +106,7 @@ class DraftMessageScreen extends Component {
       },
       navigation,
     } = this.props;
-    const chat_id = draftMessageKey.replace('whatsthat_draft_message_', ''); // Extract chat_id from draftMessageKey
+    const chat_id = draftMessageKey.replace('whatsthat_draft_message_', '');
     this.setState({ chat_id });
     this.loadDraftMessage(chat_id);
     this.focusListener = navigation.addListener('focus', () => {
@@ -145,7 +145,7 @@ class DraftMessageScreen extends Component {
 
     try {
       await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
-      navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+      navigation.navigate('SingleChat', { chat_id });
     } catch (error) {
       throw new Error('Error deleting draft message:', error);
     }
@@ -159,12 +159,12 @@ class DraftMessageScreen extends Component {
       if (moment(scheduledDate).isSameOrAfter(moment())) {
         await AsyncStorage.setItem(`whatsthat_draft_scheduledDate_${chat_id}`, JSON.stringify(scheduledDate));
         this.scheduleMessage();
-        navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+        navigation.navigate('SingleChat', { chat_id });
       } else {
         throw new Error('Scheduled date and time must be in the future.');
       }
     } catch (error) {
-      this.setState({ errorModalVisible: true }); // Show the error modal
+      this.setState({ errorModalVisible: true });
     }
   };
 
@@ -184,7 +184,7 @@ class DraftMessageScreen extends Component {
         await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
         await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
         this.setState({
-          draftMessage: '', // Remove the draft message from state
+          draftMessage: '',
         });
         await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
         await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
@@ -193,7 +193,7 @@ class DraftMessageScreen extends Component {
       } else if (response.status === 401) {
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
-        navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+        navigation.navigate('SingleChat', { chat_id });
         throw new Error('Unauthorized');
       } else if (response.status === 403) {
         throw new Error('Forbidden');
@@ -213,7 +213,7 @@ class DraftMessageScreen extends Component {
 
     try {
       await AsyncStorage.setItem(`whatsthat_draft_message_${chat_id}`, draftMessage);
-      navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+      navigation.navigate('SingleChat', { chat_id });
     } catch (error) {
       throw new Error('Error saving edited draft message:', error);
     }
@@ -222,7 +222,7 @@ class DraftMessageScreen extends Component {
   handleCancel = () => {
     const { navigation } = this.props;
     const { chat_id } = this.state;
-    navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+    navigation.navigate('SingleChat', { chat_id });
   };
 
   handleEditMessage = (text) => {
@@ -236,7 +236,7 @@ class DraftMessageScreen extends Component {
       await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
       await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
       const { navigation } = this.props;
-      navigation.navigate('SingleChat', { chat_id }); // Navigate back to SingleChatScreen with the chat_id
+      navigation.navigate('SingleChat', { chat_id });
     } catch (error) {
       throw new Error('Error sending draft message:', error);
     }
@@ -252,7 +252,6 @@ class DraftMessageScreen extends Component {
       if (delay > 0) {
         setTimeout(async () => {
           await this.sendMessageWithDraft(chat_id, draftMessage);
-          // Delete the draft message and scheduled date from local storage
           await AsyncStorage.removeItem(`whatsthat_draft_message_${chat_id}`);
           await AsyncStorage.removeItem(`whatsthat_draft_scheduledDate_${chat_id}`);
         }, delay);
@@ -330,7 +329,6 @@ class DraftMessageScreen extends Component {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
 
-        {/* Modal */}
         <Modal visible={errorModalVisible} animationType="fade" transparent>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -360,3 +358,4 @@ DraftMessageScreen.propTypes = {
 };
 
 export default DraftMessageScreen;
+

@@ -119,7 +119,7 @@ class UpdateChatScreen extends Component {
   fetchChatDetails = async () => {
     try {
       const { navigation } = this.props;
-      const { chat_id } = this.state; // Use object destructuring
+      const { chat_id } = this.state;
       const response = await fetch(`http://localhost:3333/api/1.0.0/chat/${chat_id}`, {
         method: 'GET',
         headers: {

@@ -182,11 +182,9 @@ class LoginScreen extends Component {
         try {
           await AsyncStorage.setItem('whatsthat_user_id', rJson.id.toString());
           await AsyncStorage.setItem('whatsthat_session_token', rJson.token);
-          // Successful login, navigate to the Main screen
         } catch (error) {
           throw new Error('Server Error:', error);
         }
-        // Navigate to the Main screen here after successful login and storing the session token.
         navigation.navigate('Main');
       })
       .catch((error) => {
