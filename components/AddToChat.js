@@ -260,10 +260,9 @@ AddToChatScreen.propTypes = {
   route: PropTypes.shape({
     params: PropTypes.shape({
       chat_id: PropTypes.number.isRequired,
-      chatDetails: PropTypes.object.isRequired,
     }).isRequired,
   }).isRequired,
-  navigation: PropTypes.object.isRequired,
+  navigation: PropTypes.shape.isRequired,
 };
 
 export default AddToChatScreen;

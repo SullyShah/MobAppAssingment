@@ -92,8 +92,10 @@ class EditChatScreen extends Component {
         },
       });
       if (response.status === 200) {
-        const chatDetails = await response.json();
-        this.setState({ chatDetails });
+        if (response.headers.get('content-type') === 'application/json') {
+          const responseJson = await response.json();
+          this.setState({ messageContent: responseJson.message });
+        }
       } else if (response.status === 401) {
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
@@ -106,7 +108,7 @@ class EditChatScreen extends Component {
         throw new Error('Server Error');
       }
     } catch (error) {
-      this.setState({ error });
+      throw new Error(error);
     }
   }
 
@@ -122,8 +124,10 @@ class EditChatScreen extends Component {
       });
 
       if (response.status === 200) {
-        const chatDetails = await response.json();
-        this.setState({ chatDetails });
+        if (response.headers.get('content-type') === 'application/json') {
+          const responseJson = await response.json();
+          this.setState({ messageContent: responseJson.message });
+        }
       } else if (response.status === 400) {
         throw new Error('Bad Request');
       } else if (response.status === 401) {

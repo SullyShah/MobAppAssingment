@@ -6,7 +6,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   FlatList,
 } from 'react-native';
@@ -189,7 +188,8 @@ class SingleChatScreen extends Component {
         await AsyncStorage.removeItem(`whatsthat_draft_message_${currentchat_id}`); // Remove draft for the current chat
         this.setState({ newMessage: '', isTyping: false });
       } catch (error) {
-        Alert.alert('Error', error.toString());
+        // throw new Error('Error');
+        throw new Error(error);
       }
     }
   };
@@ -242,10 +242,16 @@ class SingleChatScreen extends Component {
         }),
       });
       if (response.status === 200) {
-        const chatDetails = await response.json();
-        this.setState({
-          messages: chatDetails.messages || [],
-        });
+        try {
+          const chatDetails = null;
+          if (chatDetails) {
+            this.setState({
+              messages: chatDetails.messages || [],
+            });
+          }
+        } catch (error) {
+          throw new Error(error);
+        }
       } else if (response.status === 400) {
         throw new Error('Bad Request');
       } else if (response.status === 401) {

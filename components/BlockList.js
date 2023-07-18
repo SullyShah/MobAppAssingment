@@ -4,7 +4,6 @@ import {
   View,
   Button,
   TextInput,
-  Alert,
   TouchableOpacity,
   FlatList,
   StyleSheet,
@@ -71,6 +70,26 @@ const styles = StyleSheet.create({
   },
 });
 
+const BlockedUserItem = ({ user, unblockUser }) => {
+  const { first_name, last_name, user_id } = user;
+
+  return (
+    <View style={styles.userContainer}>
+      <Text style={styles.userName}>{`${first_name} ${last_name}`}</Text>
+      <Button title="Unblock User" onPress={() => unblockUser(user_id)} />
+    </View>
+  );
+};
+
+BlockedUserItem.propTypes = {
+  user: PropTypes.shape({
+    first_name: PropTypes.string.isRequired,
+    last_name: PropTypes.string.isRequired,
+    user_id: PropTypes.number.isRequired,
+  }).isRequired,
+  unblockUser: PropTypes.func.isRequired,
+};
+
 class BlockedScreen extends Component {
   constructor(props) {
     super(props);
@@ -108,7 +127,7 @@ class BlockedScreen extends Component {
         throw new Error('Server Error');
       }
     } catch (error) {
-      Alert.alert('Error', error.toString());
+      throw new Error('Error');
     }
   }
 
@@ -117,7 +136,7 @@ class BlockedScreen extends Component {
     navigation.goBack();
   };
 
-  async unblockUser(user_id) {
+  unblockUser = async (user_id) => {
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/block`, {
         method: 'DELETE',
@@ -141,7 +160,7 @@ class BlockedScreen extends Component {
     } catch (error) {
       this.setState({ modalVisible: true, modalContent: error.toString() });
     }
-  }
+  };
 
   render() {
     const {
@@ -174,16 +193,8 @@ class BlockedScreen extends Component {
           data={filteredBlockedUsers}
           keyExtractor={(item) => item.user_id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.userContainer}>
-              <Text style={styles.userName}>{`${item.first_name} ${item.last_name}`}</Text>
-              <Button
-                title="Unblock User"
-                onPress={() => this.unblockUser(item.user_id)}
-              />
-            </View>
+            <BlockedUserItem user={item} unblockUser={this.unblockUser} />
           )}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={styles.listContainer}
         />
 
         <Modal

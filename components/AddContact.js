@@ -315,6 +315,7 @@ class AddContactsScreen extends Component {
 AddContactsScreen.propTypes = {
   navigation: PropTypes.shape({
     goBack: PropTypes.func.isRequired,
+    addListener: PropTypes.func.isRequired,
   }).isRequired,
 };
 
