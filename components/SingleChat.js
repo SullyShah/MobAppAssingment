@@ -137,7 +137,7 @@ class SingleChatScreen extends Component {
       if (currentchat_id) {
         this.fetchNewMessages(currentchat_id);
       }
-    }, 500);
+    }, 100);
   };
 
   handleMessageLongPress = (message) => {
