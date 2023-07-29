@@ -125,19 +125,9 @@ class SignupScreen extends Component {
           password,
         }),
       });
-  
-      if (!response.ok) {
-        let errorMessage = 'Error: ' + response.status;
-        if (response.status === 400) {
-          const errorJson = await response.json();
-          if (errorJson.message && errorJson.message.includes('email already taken')) {
-            errorMessage = 'Bad Rquest. Email is already taken. Please use a different one.';
-          } else {
-            errorMessage = 'Server Error';
-          }
-        }
-        this.setState({ errorMessage, modalVisible: true });
-        return;
+          
+      if (response.status === 400) {
+        this.setState({ modalVisible: true, errorMessage: 'Account already exists' });
       }
   
       const text = await response.text();
@@ -146,13 +136,13 @@ class SignupScreen extends Component {
         try {
           responseJson = JSON.parse(text);
         } catch (error) {
-          this.setState({ errorMessage: 'Unable to process the server response', modalVisible: true });
+          this.setState({ errorMessage: 'Account already exists', modalVisible: true });
           return;
         }
       }
-  
+
       if (response.status === 201) {
-        this.setState({ modalVisible: true });
+        this.setState({ modalVisible: true, errorMessage: 'Account created successfully!' });
         await AsyncStorage.setItem('whatsthat_user_id', responseJson.user_id.toString());
       }
     } catch (error) {
