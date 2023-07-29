@@ -138,16 +138,19 @@ class AddToChatScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-      if (response.status !== 200) {
-        throw new Error('Failed to fetch contacts');
+      if (response.status === 200) {
+        const contacts = await response.json();
+        return contacts;
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised');
+      } else {
+        throw new Error('Server error');
       }
-      const contacts = await response.json();
-      return contacts;
     } catch (error) {
       this.setModalVisible(true, error.toString());
       throw error;
     }
-  };
+  };  
 
   filterContacts = () => {
     const { searchQuery, contacts } = this.state;

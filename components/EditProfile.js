@@ -235,7 +235,7 @@ class EditProfileScreen extends Component {
 
   GPI = async () => {
     const user_id = await AsyncStorage.getItem('whatsthat_user_id');
-
+  
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/photo`, {
         method: 'GET',
@@ -243,20 +243,32 @@ class EditProfileScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-
-      const resBlob = await response.blob();
-      const data = URL.createObjectURL(resBlob);
-
-      this.setState((prevState) => ({
-        user: {
-          ...prevState.user,
-          profilePicture: data,
-        },
-      }));
+  
+      if (response.status === 200) {
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+  
+        this.setState((prevState) => ({
+          user: {
+            ...prevState.user,
+            profilePicture: data,
+          },
+        }));
+      } else if (response.status === 400) {
+        throw new Error('Bad request. Please check your request and try again.');
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised');
+      } else if (response.status === 403) {
+        throw new Error('Forbidden');
+      } else if (response.status === 404) {
+        throw new Error('Not found');
+      } else {
+        throw new Error('Server error');
+      }
     } catch (error) {
       this.showErrorModal(error.toString());
     }
-  };
+  };  
 
   render() {
     const {

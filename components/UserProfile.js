@@ -130,7 +130,7 @@ class UserProfileScreen extends Component {
 
   GPI = async () => {
     const user_id = await AsyncStorage.getItem('whatsthat_user_id');
-
+  
     try {
       const response = await fetch(`http://localhost:3333/api/1.0.0/user/${user_id}/photo`, {
         method: 'GET',
@@ -138,20 +138,28 @@ class UserProfileScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
-
-      const resBlob = await response.blob();
-      const data = URL.createObjectURL(resBlob);
-
-      this.setState((prevState) => ({
-        user: {
-          ...prevState.user,
-          profilePicture: data,
-        },
-      }));
+  
+      if (response.status === 200) {
+        const resBlob = await response.blob();
+        const data = URL.createObjectURL(resBlob);
+  
+        this.setState((prevState) => ({
+          user: {
+            ...prevState.user,
+            profilePicture: data,
+          },
+        }));
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised');
+      } else if (response.status === 404) {
+        throw new Error('Not found');
+      } else {
+        throw new Error('Server error');
+      }
     } catch (err) {
-      throw new Error('error', err);
+      console.error('Error:', err.message);
     }
-  };
+  };  
 
   render() {
     const { user } = this.state;

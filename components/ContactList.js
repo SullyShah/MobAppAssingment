@@ -204,8 +204,10 @@ class ContactScreen extends Component {
         this.setModalVisible(true, 'User removed successfully');
       } else if (response.status === 400) {
         throw new Error("You can't remove yourself as a contact");
-      } else if (response.status === 404) {
+      } else if (response.status === 401) {
         throw new Error('Unauthorised');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
       } else {
         throw new Error('Server Error');
       }
@@ -226,8 +228,12 @@ class ContactScreen extends Component {
       if (response.status === 200) {
         this.fetchContacts();
         this.setModalVisible(true, 'User blocked successfully');
+      } else if (response.status === 400) {
+        throw new Error('You cant block yourself');
       } else if (response.status === 401) {
         throw new Error('Unauthorised');
+      } else if (response.status === 404) {
+        throw new Error('Not Found');
       } else {
         throw new Error('Server Error');
       }

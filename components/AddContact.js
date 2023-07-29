@@ -159,8 +159,6 @@ class AddContactsScreen extends Component {
         throw new Error('Unauthorised');
       } else if (response.status === 404) {
         throw new Error('Not Found');
-      } else if (response.status === 409) {
-        throw new Error('This user is already a contact.');
       } else {
         throw new Error('Server Error');
       }
@@ -178,6 +176,7 @@ class AddContactsScreen extends Component {
           'X-Authorization': await AsyncStorage.getItem('whatsthat_session_token'),
         },
       });
+      
       if (response.status === 200) {
         const responseData = await response.json();
         const { addedUsers } = this.state;
@@ -188,13 +187,18 @@ class AddContactsScreen extends Component {
         );
         this.setState({ availableUsers: users });
         return users;
+      } else if (response.status === 400) {
+        throw new Error('Bad request');
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised');
+      } else {
+        throw new Error('Server error');
       }
-      throw new Error(response.status === 401 ? 'Unauthorised' : 'Server Error');
     } catch (error) {
       this.setState({ modalVisible: true, errorMessage: error.toString() });
       return [];
     }
-  };
+  };  
 
   fetchContacts = async () => {
     try {
@@ -219,8 +223,11 @@ class AddContactsScreen extends Component {
         const addedUsers = await response.json();
         this.setState({ addedUsers });
         return addedUsers;
+      } else if (response.status === 401) {
+        throw new Error('Unauthorised access');
+      } else {
+        throw new Error('Server error. Please try again later.');
       }
-      throw new Error(response.status === 401 ? 'Unauthorised' : 'Server Error');
     } catch (error) {
       this.setState({ modalVisible: true, errorMessage: error.toString() });
       return [];

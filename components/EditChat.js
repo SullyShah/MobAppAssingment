@@ -99,7 +99,7 @@ class EditChatScreen extends Component {
       } else if (response.status === 401) {
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
-        throw new Error('Unauthorized');
+        throw new Error('Unauthorised');
       } else if (response.status === 403) {
         throw new Error('Forbidden');
       } else if (response.status === 404) {
@@ -134,7 +134,7 @@ class EditChatScreen extends Component {
         await AsyncStorage.removeItem('whatsthat_session_token');
         await AsyncStorage.removeItem('whatsthat_user_id');
         navigation.navigate('Login');
-        throw new Error('Unauthorized');
+        throw new Error('Unauthorised');
       } else if (response.status === 403) {
         throw new Error('Forbidden');
       } else if (response.status === 404) {

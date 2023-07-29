@@ -102,14 +102,13 @@ class NewChatScreen extends Component {
         });
         this.showModal('Success', 'Chat created');
         return chatDetails;
-      }
-      if (response.status === 400) {
+      } else if (response.status === 400) {
         throw new Error('Bad Request');
-      }
-      if (response.status === 401) {
+      } else if (response.status === 401) {
         throw new Error('Unauthorized');
+      } else {
+        throw new Error('Server Error');
       }
-      throw new Error('Server Error');
     } catch (error) {
       this.showModal('Error', error.toString());
       return null;

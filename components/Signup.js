@@ -131,9 +131,9 @@ class SignupScreen extends Component {
         if (response.status === 400) {
           const errorJson = await response.json();
           if (errorJson.message && errorJson.message.includes('email already taken')) {
-            errorMessage = 'Email is already taken. Please use a different one.';
+            errorMessage = 'Bad Rquest. Email is already taken. Please use a different one.';
           } else {
-            errorMessage = 'Bad request. Please check your inputs';
+            errorMessage = 'Server Error';
           }
         }
         this.setState({ errorMessage, modalVisible: true });

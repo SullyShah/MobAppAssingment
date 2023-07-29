@@ -175,6 +175,9 @@ class LoginScreen extends Component {
         if (response.status === 200) {
           this.setState({ error: '', modalVisible: true });
           return response.json();
+        } 
+        if(response.status === 400) {
+          throw new Error('Invalid Email/ Password Supplied');
         }
         throw new Error(`Server Error - Status: ${response.status}`);
       })
@@ -191,7 +194,7 @@ class LoginScreen extends Component {
         this.setState({ error: error.message }, () => {
           this.showErrorModal();
         });
-      });
+      });    
   }
 
   render() {
